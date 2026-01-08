@@ -14,9 +14,11 @@ if [[ "$1" == "--force" ]]; then
 fi
 
 # Install Homebrew if not present
+BREW_INSTALLED=false
 if ! command -v brew &> /dev/null; then
     echo "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    BREW_INSTALLED=true
 
     # Add brew to PATH for this session
     if [[ -f "/opt/homebrew/bin/brew" ]]; then
@@ -26,6 +28,19 @@ if ! command -v brew &> /dev/null; then
     elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     fi
+fi
+
+# Install Homebrew dependencies on Linux
+if [[ "$BREW_INSTALLED" == true && "$(uname)" == "Linux" ]]; then
+    echo "Installing Homebrew dependencies..."
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y build-essential
+    elif command -v dnf &> /dev/null; then
+        sudo dnf groupinstall -y "Development Tools"
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -S --noconfirm base-devel
+    fi
+    brew install gcc
 fi
 
 # Install stow if not present
