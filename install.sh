@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ -z "$BASH_VERSION" ]; then
+    exec bash "$0" "$@"
+fi
 set -e
 
 cd "$(dirname "$0")"
