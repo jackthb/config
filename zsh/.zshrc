@@ -15,9 +15,13 @@ elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-# Quick config editing
-alias ohmyzsh="vi ~/.oh-my-zsh"
-alias zsh="vi ~/.zshrc"
+# Aliases
+alias ..="cd .."
+alias reload="source ~/.zshrc"
+alias vact="source .venv/bin/activate"
+alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
+alias dcu="docker compose up"
+alias dcd="docker compose down"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then
@@ -30,3 +34,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Starship prompt
 eval "$(starship init zsh)"
+
+# Machine-specific config
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

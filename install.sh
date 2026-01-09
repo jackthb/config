@@ -7,12 +7,6 @@ set -e
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
 PACKAGES=(zsh starship)
-FORCE=false
-
-if [[ "$1" == "--force" ]]; then
-    FORCE=true
-fi
-
 # Install Homebrew if not present
 if ! command -v brew &> /dev/null; then
     echo "Installing Homebrew..."
@@ -59,50 +53,48 @@ if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
 
-# Handle conflicts if --force flag is set
-if [[ "$FORCE" == true ]]; then
-    for pkg in "${PACKAGES[@]}"; do
-        if [[ ! -d "$pkg" ]]; then
-            continue
+# Handle conflicts
+for pkg in "${PACKAGES[@]}"; do
+    if [[ ! -d "$pkg" ]]; then
+        continue
+    fi
+
+    while IFS= read -r -d '' file; do
+        rel_path="${file#$pkg/}"
+        target="$HOME/$rel_path"
+
+        # Skip if target doesn't exist
+        [[ ! -e "$target" ]] && continue
+
+        # Skip if already a symlink to our file
+        if [[ -L "$target" ]]; then
+            link_target="$(readlink -f "$target")"
+            our_file="$(readlink -f "$file")"
+            [[ "$link_target" == "$our_file" ]] && continue
         fi
 
-        while IFS= read -r -d '' file; do
-            rel_path="${file#$pkg/}"
-            target="$HOME/$rel_path"
+        echo "========================================="
+        echo "Conflict: $target already exists"
+        echo "========================================="
 
-            # Skip if target doesn't exist
-            [[ ! -e "$target" ]] && continue
-
-            # Skip if already a symlink to our file
-            if [[ -L "$target" ]]; then
-                link_target="$(readlink -f "$target")"
-                our_file="$(readlink -f "$file")"
-                [[ "$link_target" == "$our_file" ]] && continue
-            fi
-
-            echo "========================================="
-            echo "Conflict: $target already exists"
-            echo "========================================="
-
-            if [[ -f "$target" && -f "$file" ]]; then
-                echo "Differences (existing -> new):"
-                diff --color=auto "$target" "$file" || true
-                echo ""
-            fi
-
-            read -p "Override $target? [y/N] " -n 1 -r
+        if [[ -f "$target" && -f "$file" ]]; then
+            echo "Differences (existing -> new):"
+            diff --color=auto "$target" "$file" || true
             echo ""
+        fi
 
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                echo "Removing $target..."
-                rm -rf "$target"
-            else
-                echo "Skipping $pkg..."
-                continue 2
-            fi
-        done < <(find "$pkg" -type f -print0)
-    done
-fi
+        read -p "Override $target? [y/N] " -n 1 -r
+        echo ""
+
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Removing $target..."
+            rm -rf "$target"
+        else
+            echo "Skipping $pkg..."
+            continue 2
+        fi
+    done < <(find "$pkg" -type f -print0)
+done
 
 # Stow all configs
 echo "Linking config..."
