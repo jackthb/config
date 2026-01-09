@@ -4,7 +4,13 @@ format = """
 $directory\
 $git_branch\
 $git_status\
+$aws\
 $character"""
+
+[aws]
+format = "on [$symbol($profile )]($style)"
+style = "yellow"
+symbol = "☁️ "
 
 [directory]
 truncation_length = 3

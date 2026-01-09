@@ -83,7 +83,8 @@ for pkg in "${PACKAGES[@]}"; do
             echo ""
         fi
 
-        read -p "Override $target? [y/N] " -n 1 -r
+        echo -n ">>> Override $target? [y/N] "
+        read -n 1 -r < /dev/tty
         echo ""
 
         if [[ $REPLY =~ ^[Yy]$ ]]; then
