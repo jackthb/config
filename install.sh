@@ -7,31 +7,56 @@ set -e
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
 PACKAGES=(zsh starship)
-# Install Homebrew if not present
-if ! command -v brew &> /dev/null; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    # Add brew to PATH for this session
-    if [[ -f "/opt/homebrew/bin/brew" ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -f "/usr/local/bin/brew" ]]; then
-        eval "$(/usr/local/bin/brew shellenv)"
-    elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# Detect OS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PKG_MANAGER="brew"
+elif [[ -f /etc/debian_version ]]; then
+    PKG_MANAGER="apt"
+else
+    PKG_MANAGER="brew"
+fi
+
+# Install package manager and packages based on OS
+if [[ "$PKG_MANAGER" == "brew" ]]; then
+    # Install Homebrew if not present
+    if ! command -v brew &> /dev/null; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        # Add brew to PATH for this session
+        if [[ -f "/opt/homebrew/bin/brew" ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [[ -f "/usr/local/bin/brew" ]]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
     fi
-fi
 
-# Install stow if not present
-if ! command -v stow &> /dev/null; then
-    echo "Installing stow..."
-    brew install stow
-fi
+    # Install stow if not present
+    if ! command -v stow &> /dev/null; then
+        echo "Installing stow..."
+        brew install stow
+    fi
 
-# Install starship if not present
-if ! command -v starship &> /dev/null; then
-    echo "Installing starship..."
-    brew install starship
+    # Install starship if not present
+    if ! command -v starship &> /dev/null; then
+        echo "Installing starship..."
+        brew install starship
+    fi
+elif [[ "$PKG_MANAGER" == "apt" ]]; then
+    # Install stow if not present
+    if ! command -v stow &> /dev/null; then
+        echo "Installing stow..."
+        sudo apt update && sudo apt install -y stow
+    fi
+
+    # Install starship if not present
+    if ! command -v starship &> /dev/null; then
+        echo "Installing starship..."
+        curl -sS https://starship.rs/install.sh | sh -s -- -y
+    fi
 fi
 
 # Install oh-my-zsh if not present
