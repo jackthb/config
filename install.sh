@@ -46,10 +46,14 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
         brew install starship
     fi
 elif [[ "$PKG_MANAGER" == "apt" ]]; then
-    # Install stow if not present
-    if ! command -v stow &> /dev/null; then
-        echo "Installing stow..."
-        sudo apt update && sudo apt install -y stow
+    # Install zsh and stow if not present
+    PKGS_TO_INSTALL=()
+    command -v zsh &> /dev/null || PKGS_TO_INSTALL+=(zsh)
+    command -v stow &> /dev/null || PKGS_TO_INSTALL+=(stow)
+
+    if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
+        echo "Installing ${PKGS_TO_INSTALL[*]}..."
+        sudo apt update && sudo apt install -y "${PKGS_TO_INSTALL[@]}"
     fi
 
     # Install starship if not present
@@ -60,9 +64,11 @@ elif [[ "$PKG_MANAGER" == "apt" ]]; then
 fi
 
 # Install oh-my-zsh if not present
+FRESH_ZSH_INSTALL=false
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     echo "Installing oh-my-zsh..."
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    FRESH_ZSH_INSTALL=true
 fi
 
 # Install zsh plugins
@@ -96,6 +102,13 @@ for pkg in "${PACKAGES[@]}"; do
             link_target="$(readlink -f "$target")"
             our_file="$(readlink -f "$file")"
             [[ "$link_target" == "$our_file" ]] && continue
+        fi
+
+        # Auto-override default .zshrc if we just installed oh-my-zsh
+        if [[ "$FRESH_ZSH_INSTALL" == true && "$rel_path" == ".zshrc" ]]; then
+            echo "Replacing default oh-my-zsh .zshrc with config..."
+            rm -rf "$target"
+            continue
         fi
 
         echo "========================================="
