@@ -35,5 +35,10 @@ export PATH="$HOME/.local/bin:$PATH"
 # Starship prompt
 eval "$(starship init zsh)"
 
+# nvm (requires ~/.local/bin/hash wrapper for zsh compatibility)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
 # Machine-specific config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
