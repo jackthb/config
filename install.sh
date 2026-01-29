@@ -46,11 +46,6 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
         brew install starship
     fi
 
-    # Install fzf if not present (required for forgit)
-    if ! command -v fzf &> /dev/null; then
-        echo "Installing fzf..."
-        brew install fzf
-    fi
 elif [[ "$PKG_MANAGER" == "apt" ]]; then
     # Install zsh and stow if not present
     PKGS_TO_INSTALL=()
@@ -68,11 +63,6 @@ elif [[ "$PKG_MANAGER" == "apt" ]]; then
         curl -sS https://starship.rs/install.sh | sh -s -- -y
     fi
 
-    # Install fzf if not present (required for forgit)
-    if ! command -v fzf &> /dev/null; then
-        echo "Installing fzf..."
-        sudo apt install -y fzf
-    fi
 fi
 
 # Install oh-my-zsh if not present
@@ -94,11 +84,6 @@ fi
 if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
     echo "Installing zsh-syntax-highlighting..."
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-fi
-
-if [[ ! -d "$ZSH_CUSTOM/plugins/forgit" ]]; then
-    echo "Installing forgit..."
-    git clone https://github.com/wfxr/forgit "$ZSH_CUSTOM/plugins/forgit"
 fi
 
 # Handle conflicts
