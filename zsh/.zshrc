@@ -42,3 +42,11 @@ export NVM_DIR="$HOME/.nvm"
 
 # Machine-specific config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# pnpm
+export PNPM_HOME="/Users/jack.burgess/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
