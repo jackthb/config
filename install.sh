@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship)
+PACKAGES=(zsh starship nvim claude)
 
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
