@@ -52,3 +52,11 @@ esac
 # pnpm end
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+
+(
+  cd ~/code/config
+  git fetch -q 2>/dev/null
+  if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
+    git pull --ff-only -q && echo "config: updated"
+  fi
+) &!
