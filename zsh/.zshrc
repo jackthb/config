@@ -43,6 +43,14 @@ export NVM_DIR="$HOME/.nvm"
 # Machine-specific config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
+gcol() { git checkout "$@" }
+_gcol() {
+  local -a branches
+  branches=(${(f)"$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ 2>/dev/null)"})
+  compadd -a branches
+}
+compdef _gcol gcol
+
 # pnpm
 export PNPM_HOME="/Users/jack.burgess/Library/pnpm"
 case ":$PATH:" in
@@ -53,10 +61,24 @@ esac
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
+_config_notify() {
+  if [[ -f /tmp/.config_status ]]; then
+    cat /tmp/.config_status
+    rm -f /tmp/.config_status
+  fi
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _config_notify
+
 (
   cd ~/code/config
   git fetch -q 2>/dev/null
+  msg=""
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && echo "config: updated"
+    git pull --ff-only -q && msg="config: updated"
   fi
+  if [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
+    msg="${msg:+$msg$'\n'}config: unpushed changes"
+  fi
+  [[ -n "$msg" ]] && echo "$msg" > /tmp/.config_status
 ) &!
