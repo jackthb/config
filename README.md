@@ -1,6 +1,6 @@
 # Config
 
-Dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Development config managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Setup
 
