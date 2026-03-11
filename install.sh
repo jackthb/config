@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship nvim claude)
+PACKAGES=(zsh starship nvim claude tmux)
 
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -40,10 +40,22 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
         brew install stow
     fi
 
+    # Install neovim if not present
+    if ! command -v nvim &> /dev/null; then
+        echo "Installing neovim..."
+        brew install neovim
+    fi
+
     # Install starship if not present
     if ! command -v starship &> /dev/null; then
         echo "Installing starship..."
         brew install starship
+    fi
+
+    # Install tmux if not present
+    if ! command -v tmux &> /dev/null; then
+        echo "Installing tmux..."
+        brew install tmux
     fi
 
 elif [[ "$PKG_MANAGER" == "apt" ]]; then
@@ -51,6 +63,8 @@ elif [[ "$PKG_MANAGER" == "apt" ]]; then
     PKGS_TO_INSTALL=()
     command -v zsh &> /dev/null || PKGS_TO_INSTALL+=(zsh)
     command -v stow &> /dev/null || PKGS_TO_INSTALL+=(stow)
+    command -v nvim &> /dev/null || PKGS_TO_INSTALL+=(neovim)
+    command -v tmux &> /dev/null || PKGS_TO_INSTALL+=(tmux)
 
     if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
         echo "Installing ${PKGS_TO_INSTALL[*]}..."
