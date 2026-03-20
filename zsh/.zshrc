@@ -22,6 +22,7 @@ alias vact="source .venv/bin/activate"
 alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
 alias dcu="docker compose up"
 alias dcd="docker compose down"
+alias claude-sync="$(dirname $(dirname $(readlink -f ~/.zshrc)))/claude/claude-sync"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then
