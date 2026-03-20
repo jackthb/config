@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/bin/zsh
 # Claude Code config sync status & management
 # Shows the state of all skills and settings across repo and local
-
-set -e
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
@@ -53,23 +51,16 @@ show_status() {
     echo -e "${BOLD}Skills${NC}"
 
     # Collect all skill names from both locations
-    declare -A skills
-    if [[ -d "$REPO_COMMANDS" ]]; then
-        for f in "$REPO_COMMANDS"/*.md; do
-            [[ -f "$f" ]] && skills["$(basename "$f")"]=1
-        done
-    fi
-    if [[ -d "$LOCAL_COMMANDS" ]]; then
-        for f in "$LOCAL_COMMANDS"/*.md; do
-            [[ -f "$f" ]] && skills["$(basename "$f")"]=1
-        done
-    fi
+    local skills=()
+    [[ -d "$REPO_COMMANDS" ]] && skills+=("$REPO_COMMANDS"/*.md(N:t))
+    [[ -d "$LOCAL_COMMANDS" ]] && skills+=("$LOCAL_COMMANDS"/*.md(N:t))
+    skills=(${(u)${(o)skills[@]}})
 
     if [[ ${#skills[@]} -eq 0 ]]; then
         echo -e "  ${DIM}no skills found${NC}"
     fi
 
-    for skill in $(echo "${!skills[@]}" | tr ' ' '\n' | sort); do
+    for skill in "${skills[@]}"; do
         local_file="$LOCAL_COMMANDS/$skill"
         repo_file="$REPO_COMMANDS/$skill"
         name="${skill%.md}"
