@@ -23,6 +23,8 @@ alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
 alias dcu="docker compose up"
 alias dcd="docker compose down"
 alias claude-sync="$(dirname $(dirname $(readlink -f ~/.zshrc)))/claude/claude-sync"
+alias zshconfig="vi ~/.zshrc"
+alias zshlocal="vi ~/.zshrc.local"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then
