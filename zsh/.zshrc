@@ -86,3 +86,10 @@ add-zsh-hook precmd _config_notify
   fi
   [[ -n "$msg" ]] && echo "$msg" > /tmp/.config_status
 ) &!
+
+# bun completions
+[ -s "/home/jackc/.bun/_bun" ] && source "/home/jackc/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
