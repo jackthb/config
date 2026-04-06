@@ -84,6 +84,13 @@ add-zsh-hook precmd _config_notify
   if [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
     msg="${msg:+$msg$'\n'}config: unpushed changes"
   fi
+  # Re-run install if install.sh has changed
+  install_hash=$(md5sum "$config_dir/install.sh" 2>/dev/null | cut -d' ' -f1)
+  last_hash=""
+  [[ -f "$HOME/.config_install_hash" ]] && last_hash=$(cat "$HOME/.config_install_hash")
+  if [[ "$install_hash" != "$last_hash" ]]; then
+    bash "$config_dir/install.sh" &>/dev/null && echo "$install_hash" > "$HOME/.config_install_hash" && msg="${msg:+$msg$'\n'}config: ran install"
+  fi
   [[ -n "$msg" ]] && echo "$msg" > /tmp/.config_status
 ) &!
 
