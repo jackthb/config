@@ -58,6 +58,12 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
         brew install tmux
     fi
 
+    # Install claude-squad if not present
+    if ! command -v cs &> /dev/null; then
+        echo "Installing claude-squad..."
+        brew install claude-squad && ln -s "$(brew --prefix)/bin/claude-squad" "$(brew --prefix)/bin/cs"
+    fi
+
 elif [[ "$PKG_MANAGER" == "apt" ]]; then
     # Install zsh and stow if not present
     PKGS_TO_INSTALL=()
@@ -69,6 +75,12 @@ elif [[ "$PKG_MANAGER" == "apt" ]]; then
     if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
         echo "Installing ${PKGS_TO_INSTALL[*]}..."
         sudo apt update && sudo apt install -y "${PKGS_TO_INSTALL[@]}"
+    fi
+
+    # Install claude-squad if not present
+    if ! command -v cs &> /dev/null; then
+        echo "Installing claude-squad..."
+        curl -fsSL https://raw.githubusercontent.com/smtg-ai/claude-squad/main/install.sh | bash
     fi
 
     # Install starship if not present

@@ -74,11 +74,12 @@ autoload -Uz add-zsh-hook
 add-zsh-hook precmd _config_notify
 
 (
-  cd ~/code/config
+  config_dir="${CONFIG_DIR:-$HOME/code/config}"
+  cd "$config_dir"
   git fetch -q 2>/dev/null
   msg=""
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && msg="config: updated"
+    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && msg="config: synced"
   fi
   if [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
     msg="${msg:+$msg$'\n'}config: unpushed changes"
