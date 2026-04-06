@@ -1,4 +1,4 @@
-# Global Settings
+# Global Instructions
 
 ## Git
 
@@ -15,3 +15,4 @@ Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `style`, `perf`, `ci`
 - No period at the end of the subject line
 - Scope is optional: `feat(auth): add login flow`
 - Never add Co-Authored-By lines to commits
+- Remind the user to commit and push when a distinct chunk of work is completed
