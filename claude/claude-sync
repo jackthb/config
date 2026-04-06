@@ -65,7 +65,7 @@ show_status() {
         repo_file="$REPO_COMMANDS/$skill"
         name="${skill%.md}"
 
-        if [[ -L "$local_file" ]]; then
+        if [[ -L "$local_file" ]] || [[ -L "$LOCAL_COMMANDS" ]]; then
             link="$(readlink -f "$local_file")"
             expected="$(readlink -f "$repo_file" 2>/dev/null || echo "")"
             if [[ "$link" == "$expected" ]]; then
@@ -100,7 +100,8 @@ do_sync() {
     echo ""
 
     # Remove existing non-symlink files that stow needs to replace
-    if [[ -d "$REPO_COMMANDS" ]]; then
+    # Skip if commands dir is already a stow symlink (tree folding)
+    if [[ -d "$REPO_COMMANDS" && ! -L "$LOCAL_COMMANDS" ]]; then
         for f in "$REPO_COMMANDS"/*.md; do
             [[ -f "$f" ]] || continue
             name="$(basename "$f")"
@@ -125,8 +126,8 @@ do_sync() {
         done
     fi
 
-    # Run stow
-    cd "$REPO_DIR"
+    # Run stow (from repo root, not package dir)
+    cd "$REPO_DIR/.."
     stow -v -t ~ claude 2>&1 | while read -r line; do
         echo -e "  ${DIM}$line${NC}"
     done
@@ -168,7 +169,7 @@ add_skill() {
     cp "$skill_path" "$REPO_COMMANDS/$name"
     rm "$skill_path"
 
-    cd "$REPO_DIR"
+    cd "$REPO_DIR/.."
     stow -v -t ~ claude 2>&1 | while read -r line; do
         echo -e "  ${DIM}$line${NC}"
     done
