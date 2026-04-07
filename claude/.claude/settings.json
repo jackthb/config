@@ -3,20 +3,28 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
-      "Bash(find /home/jackc/code/dac-tools/web -path '/.next' -prune -o -type f \\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" \\) -print)",
-      "Bash(grep -v '.next')",
-      "Bash(grep -v 'node_modules')",
-      "Bash(grep:*)",
-      "Bash(grep:*)",
-      "Bash(grep:*)",
-      "Bash(git:*)",
-      "Bash(head:*)",
-      "Bash(ls /home/jackc/code/dac-tools/data/*.json)",
-      "Bash(find:*)",
-      "Bash(head:*)",
-      "Bash(grep:*)",
-      "Bash(head:*)"
+      "Edit(*)",
+      "Write(*)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(bun *)",
+      "Bash(bunx *)",
+      "Bash(node *)",
+      "Bash(python *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(mkdir *)",
+      "Bash(docker *)",
+      "Bash(make *)",
+      "WebFetch(domain:*)",
+      "mcp__*"
     ]
   },
   "hooks": {
