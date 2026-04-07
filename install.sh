@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship nvim claude tmux claude-squad)
+PACKAGES=(zsh starship nvim claude tmux)
 
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -149,14 +149,12 @@ for pkg in "${PACKAGES[@]}"; do
             echo ""
         fi
 
-        if [[ ! -t 0 ]]; then
-            echo "Skipping $pkg (non-interactive)..."
+        if read -n 1 -r -p ">>> Override $target? [y/N] " < /dev/tty 2>/dev/null; then
+            echo ""
+        else
+            echo "Skipping $pkg (no TTY available)..."
             continue 2
         fi
-
-        echo -n ">>> Override $target? [y/N] "
-        read -n 1 -r < /dev/tty
-        echo ""
 
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo "Removing $target..."

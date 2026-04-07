@@ -1,6 +1,0 @@
-{
-  "default_program": "/Users/jack.burgess/.local/bin/claude",
-  "auto_yes": false,
-  "daemon_poll_interval": 1000,
-  "branch_prefix": "jack.burgess/"
-}
