@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship nvim claude tmux)
+PACKAGES=(zsh starship nvim claude tmux claude-squad)
 
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -149,6 +149,11 @@ for pkg in "${PACKAGES[@]}"; do
             echo ""
         fi
 
+        if [[ ! -t 0 ]]; then
+            echo "Skipping $pkg (non-interactive)..."
+            continue 2
+        fi
+
         echo -n ">>> Override $target? [y/N] "
         read -n 1 -r < /dev/tty
         echo ""
@@ -167,7 +172,7 @@ done
 echo "Linking config..."
 for pkg in "${PACKAGES[@]}"; do
     if [[ -d "$pkg" ]]; then
-        stow -v -t ~ "$pkg"
+        stow -v -R -t ~ "$pkg" 2>/dev/null || true
     fi
 done
 

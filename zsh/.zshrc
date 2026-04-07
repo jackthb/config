@@ -79,7 +79,7 @@ add-zsh-hook precmd _config_notify
   git fetch -q 2>/dev/null
   msg=""
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && msg="config: synced"
+    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux claude-squad; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && msg="config: synced"
   fi
   if [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
     msg="${msg:+$msg$'\n'}config: unpushed changes"
