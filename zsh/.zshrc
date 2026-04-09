@@ -76,22 +76,28 @@ add-zsh-hook precmd _config_notify
 (
   config_dir="${CONFIG_DIR:-$HOME/code/config}"
   cd "$config_dir"
+  green='\033[0;32m'; yellow='\033[0;33m'; reset='\033[0m'
   git fetch -q 2>/dev/null
-  msg=""
+  lines=()
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux claude-squad; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && msg="config: synced"
+    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux claude-squad; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && lines+=("${green}config: synced${reset}")
   fi
-  if [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
-    msg="${msg:+$msg$'\n'}config: unpushed changes"
+  if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+    lines+=("${yellow}config: uncommitted changes${reset}")
+  elif [[ $(git rev-list @{u}..HEAD --count 2>/dev/null) -gt 0 ]]; then
+    lines+=("${yellow}config: unpushed changes${reset}")
   fi
   # Re-run install if install.sh has changed
   install_hash=$(md5sum "$config_dir/install.sh" 2>/dev/null | cut -d' ' -f1)
   last_hash=""
   [[ -f "$HOME/.config_install_hash" ]] && last_hash=$(cat "$HOME/.config_install_hash")
   if [[ "$install_hash" != "$last_hash" ]]; then
-    bash "$config_dir/install.sh" &>/dev/null && echo "$install_hash" > "$HOME/.config_install_hash" && msg="${msg:+$msg$'\n'}config: ran install"
+    bash "$config_dir/install.sh" &>/dev/null && echo "$install_hash" > "$HOME/.config_install_hash" && lines+=("${green}config: ran install${reset}")
   fi
-  [[ -n "$msg" ]] && echo "$msg" > /tmp/.config_status
+  if [[ ${#lines[@]} -eq 0 ]]; then
+    lines+=("${green}config: ok${reset}")
+  fi
+  printf '%b\n' "${lines[@]}" > /tmp/.config_status
 ) &!
 
 # bun completions
