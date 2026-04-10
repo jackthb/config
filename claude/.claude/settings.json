@@ -4,7 +4,6 @@
   },
   "permissions": {
     "defaultMode": "auto",
-    "disableAutoMode": "disable",
     "allow": [
       "Edit(*)",
       "Write(*)",
