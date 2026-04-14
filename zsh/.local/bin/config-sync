@@ -1,0 +1,49 @@
+#!/bin/zsh
+# Config repo sync - pulls changes, links dotfiles, pushes local commits
+
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+REPO_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)"
+PACKAGES=(zsh starship claude)
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+if [[ -z "$REPO_DIR" ]]; then
+    echo -e "${RED}Could not find config repo${NC}"
+    exit 1
+fi
+
+cd "$REPO_DIR"
+
+if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+    echo -e "${YELLOW}Uncommitted changes — commit before syncing:${NC}"
+    git status --short
+    exit 1
+fi
+
+echo -e "${BOLD}Fetching...${NC}"
+git fetch -q
+
+behind=$(git rev-list HEAD..@{u} --count 2>/dev/null || echo 0)
+if [[ "$behind" -gt 0 ]]; then
+    echo -e "${BOLD}Pulling $behind commit(s)...${NC}"
+    git pull --ff-only
+fi
+
+echo -e "${BOLD}Linking config...${NC}"
+mkdir -p "$HOME/.local/bin"
+for pkg in "${PACKAGES[@]}"; do
+    [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null && echo -e "  ${GREEN}stowed${NC}  $pkg"
+done
+
+ahead=$(git rev-list @{u}..HEAD --count 2>/dev/null || echo 0)
+if [[ "$ahead" -gt 0 ]]; then
+    echo -e "${BOLD}Pushing $ahead commit(s)...${NC}"
+    git push
+fi
+
+echo -e "${GREEN}Done!${NC}"

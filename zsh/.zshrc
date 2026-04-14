@@ -22,7 +22,6 @@ alias vact="source .venv/bin/activate"
 alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
 alias dcu="docker compose up"
 alias dcd="docker compose down"
-alias claude-sync="$(dirname $(dirname $(readlink -f ~/.zshrc)))/claude/claude-sync"
 alias zshconfig="vi ~/.zshrc"
 alias zshlocal="vi ~/.zshrc.local"
 
@@ -55,7 +54,7 @@ _gcol() {
 compdef _gcol gcol
 
 # pnpm
-export PNPM_HOME="/Users/jack.burgess/Library/pnpm"
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
@@ -80,7 +79,7 @@ add-zsh-hook precmd _config_notify
   git fetch -q 2>/dev/null
   lines=()
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && for pkg in claude zsh starship nvim tmux claude-squad; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && lines+=("${green}config: synced${reset}")
+    git pull --ff-only -q && for pkg in zsh starship claude; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && lines+=("${green}config: synced${reset}")
   fi
   if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
     lines+=("${yellow}config: uncommitted changes${reset}")
@@ -99,10 +98,3 @@ add-zsh-hook precmd _config_notify
   fi
   printf '%b\n' "${lines[@]}" > /tmp/.config_status
 ) &!
-
-# bun completions
-[ -s "/home/jackc/.bun/_bun" ] && source "/home/jackc/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
