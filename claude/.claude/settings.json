@@ -3,7 +3,6 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Edit(*)",
       "Write(*)",
@@ -25,7 +24,8 @@
       "Bash(make *)",
       "WebFetch(domain:*)",
       "mcp__*"
-    ]
+    ],
+    "defaultMode": "auto"
   },
   "hooks": {
     "PermissionRequest": [
@@ -91,6 +91,12 @@
     "engineering-core@perk": true,
     "pyright-lsp@claude-plugins-official": true
   },
+  "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
   "skipDangerousModePermissionPrompt": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "model": "opus[1m]"
 }
