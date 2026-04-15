@@ -24,6 +24,7 @@ alias dcu="docker compose up"
 alias dcd="docker compose down"
 alias zshconfig="vi ~/.zshrc"
 alias zshlocal="vi ~/.zshrc.local"
+alias cdconfig="cd ~/code/config"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then

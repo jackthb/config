@@ -2,7 +2,6 @@
 
 ## Behaviour
 
-- Never add comments unless specifically asked to.
 - Never hardcode IDs. If you have to test a fetch, mock the return, or create the item in advance with a factory then reuse that generated ID.
 - Don't ever do --no-verify without first confirming that is what I want.
 - dont commit with all of your "co-author" stuff. ever
