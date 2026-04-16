@@ -17,6 +17,10 @@ fi
 
 # Aliases
 alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias ~="cd ~"
+alias -- -="cd -"
 alias reload="source ~/.zshrc"
 alias vact="source .venv/bin/activate"
 alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
@@ -24,7 +28,7 @@ alias dcu="docker compose up"
 alias dcd="docker compose down"
 alias zshconfig="vi ~/.zshrc"
 alias zshlocal="vi ~/.zshrc.local"
-alias cdconfig="cd ~/code/config"
+alias cdconf="cd ~/code/config"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then

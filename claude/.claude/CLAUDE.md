@@ -24,3 +24,4 @@ Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `style`, `perf`, `ci`
 - Scope is optional: `feat(auth): add login flow`
 - Never add Co-Authored-By lines to commits
 - Remind the user to commit and push when a distinct chunk of work is completed
+- Never create PRs directly. Always use `gh pr create --web` to open the browser create-PR page. You can fill in title, body, and other fields, but never actually create the PR yourself. Always let the user click the create button
