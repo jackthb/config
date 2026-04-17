@@ -91,6 +91,7 @@
     "engineering-core@perk": true,
     "pyright-lsp@claude-plugins-official": true
   },
+  "effortLevel": "high",
   "voice": {
     "enabled": true,
     "mode": "hold"
