@@ -8,18 +8,41 @@ cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
 PACKAGES=(zsh starship claude)
 
-# Detect OS
+# Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
     PKG_MANAGER="brew"
-elif [[ -f /etc/debian_version ]]; then
+elif command -v apt &> /dev/null && [[ -f /etc/debian_version ]]; then
     PKG_MANAGER="apt"
+elif command -v dnf &> /dev/null; then
+    PKG_MANAGER="dnf"
+elif command -v pacman &> /dev/null; then
+    PKG_MANAGER="pacman"
+elif command -v zypper &> /dev/null; then
+    PKG_MANAGER="zypper"
 else
     PKG_MANAGER="brew"
 fi
 
-# Install package manager and packages based on OS
+echo "Using package manager: $PKG_MANAGER"
+
+native_install() {
+    case "$PKG_MANAGER" in
+        brew)   brew install "$@" ;;
+        apt)    sudo apt install -y "$@" ;;
+        dnf)    sudo dnf install -y "$@" ;;
+        pacman) sudo pacman -S --noconfirm --needed "$@" ;;
+        zypper) sudo zypper install -y "$@" ;;
+    esac
+}
+
+native_sync() {
+    case "$PKG_MANAGER" in
+        apt) sudo apt update ;;
+    esac
+}
+
+# Install Homebrew on macOS (or as Linux fallback)
 if [[ "$PKG_MANAGER" == "brew" ]]; then
-    # Install Homebrew if not present
     if ! command -v brew &> /dev/null; then
         echo "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -33,63 +56,81 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         fi
     fi
-
-    # Install stow if not present
-    if ! command -v stow &> /dev/null; then
-        echo "Installing stow..."
-        brew install stow
-    fi
-
-    # Install neovim if not present
-    if ! command -v nvim &> /dev/null; then
-        echo "Installing neovim..."
-        brew install neovim
-    fi
-
-    # Install starship if not present
-    if ! command -v starship &> /dev/null; then
-        echo "Installing starship..."
-        brew install starship
-    fi
-
-    # Install tmux if not present
-    if ! command -v tmux &> /dev/null; then
-        echo "Installing tmux..."
-        brew install tmux
-    fi
-
-    # Install claude-squad if not present
-    if ! command -v cs &> /dev/null; then
-        echo "Installing claude-squad..."
-        brew install claude-squad && ln -s "$(brew --prefix)/bin/claude-squad" "$(brew --prefix)/bin/cs"
-    fi
-
-elif [[ "$PKG_MANAGER" == "apt" ]]; then
-    # Install zsh and stow if not present
-    PKGS_TO_INSTALL=()
-    command -v zsh &> /dev/null || PKGS_TO_INSTALL+=(zsh)
-    command -v stow &> /dev/null || PKGS_TO_INSTALL+=(stow)
-    command -v nvim &> /dev/null || PKGS_TO_INSTALL+=(neovim)
-    command -v tmux &> /dev/null || PKGS_TO_INSTALL+=(tmux)
-
-    if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
-        echo "Installing ${PKGS_TO_INSTALL[*]}..."
-        sudo apt update && sudo apt install -y "${PKGS_TO_INSTALL[@]}"
-    fi
-
-    # Install claude-squad if not present
-    if ! command -v cs &> /dev/null; then
-        echo "Installing claude-squad..."
-        curl -fsSL https://raw.githubusercontent.com/smtg-ai/claude-squad/main/install.sh | bash
-    fi
-
-    # Install starship if not present
-    if ! command -v starship &> /dev/null; then
-        echo "Installing starship..."
-        curl -sS https://starship.rs/install.sh | sh -s -- -y
-    fi
-
 fi
+
+# Collect and install missing base packages (cmd:pkg — all distros share these names)
+MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "tmux:tmux")
+PKGS_TO_INSTALL=()
+for entry in "${MAPPINGS[@]}"; do
+    cmd="${entry%%:*}"
+    pkg="${entry##*:}"
+    command -v "$cmd" &> /dev/null || PKGS_TO_INSTALL+=("$pkg")
+done
+
+if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
+    echo "Installing ${PKGS_TO_INSTALL[*]}..."
+    native_sync
+    native_install "${PKGS_TO_INSTALL[@]}"
+fi
+
+# GitHub CLI (package name differs on pacman)
+if ! command -v gh &> /dev/null; then
+    echo "Installing gh..."
+    case "$PKG_MANAGER" in
+        pacman) native_install github-cli ;;
+        *)      native_install gh ;;
+    esac
+fi
+
+# Starship: packaged on brew/pacman, upstream installer elsewhere
+if ! command -v starship &> /dev/null; then
+    echo "Installing starship..."
+    case "$PKG_MANAGER" in
+        brew|pacman) native_install starship ;;
+        *)           curl -sS https://starship.rs/install.sh | sh -s -- -y ;;
+    esac
+fi
+
+# GUI apps: 1Password + Ghostty (pacman and brew fully wired; other distros stubbed)
+case "$PKG_MANAGER" in
+    brew)
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            for cask in 1password ghostty; do
+                if ! brew list --cask "$cask" &> /dev/null; then
+                    echo "Installing $cask..."
+                    brew install --cask "$cask"
+                fi
+            done
+        else
+            echo "Skipping 1Password/Ghostty: linuxbrew doesn't support casks."
+        fi
+        ;;
+    pacman)
+        # Ghostty is in the extra repo
+        if ! command -v ghostty &> /dev/null; then
+            echo "Installing ghostty..."
+            native_install ghostty
+        fi
+        # 1Password lives in the AUR — needs paru or yay (paru ships with CachyOS)
+        if ! pacman -Qi 1password &> /dev/null; then
+            if command -v paru &> /dev/null; then
+                echo "Installing 1Password (AUR via paru)..."
+                paru -S --noconfirm --needed 1password
+            elif command -v yay &> /dev/null; then
+                echo "Installing 1Password (AUR via yay)..."
+                yay -S --noconfirm --needed 1password
+            else
+                echo "Skipping 1Password: install paru or yay first, then: paru -S 1password"
+            fi
+        fi
+        ;;
+    *)
+        # TODO: add repos for apt/dnf/zypper — see:
+        #   1Password: https://support.1password.com/install-linux/
+        #   Ghostty:   https://ghostty.org/download
+        echo "Skipping 1Password/Ghostty: not wired up for $PKG_MANAGER yet."
+        ;;
+esac
 
 # Install oh-my-zsh if not present
 FRESH_ZSH_INSTALL=false
@@ -110,6 +151,14 @@ fi
 if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
     echo "Installing zsh-syntax-highlighting..."
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+fi
+
+# Set git identity if not already configured
+if [[ -z "$(git config --global user.name)" ]]; then
+    git config --global user.name "jackthb"
+fi
+if [[ -z "$(git config --global user.email)" ]]; then
+    git config --global user.email "19895932+jackthb@users.noreply.github.com"
 fi
 
 # Handle conflicts
