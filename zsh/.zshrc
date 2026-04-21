@@ -37,7 +37,7 @@ if [[ -n "$WSL_DISTRO_NAME" ]]; then
 fi
 
 # Local binaries
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
 
 # Starship prompt
 eval "$(starship init zsh)"
@@ -103,3 +103,10 @@ add-zsh-hook precmd _config_notify
   fi
   printf '%b\n' "${lines[@]}" > /tmp/.config_status
 ) &!
+
+# bun completions
+[ -s "/home/jack/.bun/_bun" ] && source "/home/jack/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

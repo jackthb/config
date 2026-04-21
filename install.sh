@@ -104,6 +104,25 @@ if ! command -v claude &> /dev/null; then
     curl -fsSL https://claude.ai/install.sh | bash
 fi
 
+# Codex CLI: installed globally via npm. Pull in node/npm first if missing
+# (brew bundles npm with the node formula; other managers ship npm separately).
+if ! command -v codex &> /dev/null; then
+    if ! command -v npm &> /dev/null; then
+        echo "Installing node/npm..."
+        case "$PKG_MANAGER" in
+            brew) native_install node ;;
+            *)    native_install npm ;;
+        esac
+    fi
+    echo "Installing Codex CLI..."
+    # brew's npm prefix is user-writable; system npm on Linux needs sudo.
+    if [[ -w "$(npm config get prefix)" ]]; then
+        npm install -g @openai/codex
+    else
+        sudo npm install -g @openai/codex
+    fi
+fi
+
 # GUI apps: 1Password + Ghostty (pacman and brew fully wired; other distros stubbed)
 case "$PKG_MANAGER" in
     brew)
