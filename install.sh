@@ -266,6 +266,26 @@ for pkg in "${PACKAGES[@]}"; do
     done < <(find "$pkg" -type f -print0)
 done
 
+# Unfold any target dirs that a previous (folded) stow run turned into
+# symlinks pointing back into the source. We replace the symlink with a real
+# directory so apps can write runtime data there without polluting the repo.
+unfold_target() {
+    local target="$1" source_dir="$2"
+    [[ -L "$target" ]] || return 0
+    [[ "$(readlink -f "$target")" == "$(readlink -f "$source_dir")" ]] || return 0
+    echo "Unfolding $target..."
+    rm "$target"
+    mkdir -p "$target"
+}
+
+for pkg in "${PACKAGES[@]}"; do
+    [[ -d "$pkg" ]] || continue
+    while IFS= read -r -d '' src_subdir; do
+        rel="${src_subdir#$pkg/}"
+        unfold_target "$HOME/$rel" "$src_subdir"
+    done < <(find "$pkg" -mindepth 1 -type d -print0)
+done
+
 # Stow all configs. --no-folding forces stow to create real directories at
 # the target and only symlink individual files — without it, stow folds whole
 # directories (e.g. makes ~/.claude a symlink to source/claude/.claude/),
