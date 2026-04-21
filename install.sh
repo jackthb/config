@@ -145,6 +145,25 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
+# 1Password: allow Zen Browser to talk to the desktop app via the custom
+# allowed-browsers list. Both apps must be installed natively (not flatpak/snap)
+# and the file must be root-owned for 1Password's Native Core to verify it.
+# https://support.1password.com/connect-browser/
+if [[ "$OSTYPE" != "darwin"* ]] && command -v 1password &> /dev/null; then
+    OP_BROWSERS=/etc/1password/custom_allowed_browsers
+    if [[ ! -f "$OP_BROWSERS" ]] || ! grep -qx zen-bin "$OP_BROWSERS" 2>/dev/null; then
+        echo "Allowing Zen Browser in 1Password..."
+        {
+            sudo mkdir -p /etc/1password \
+                && sudo touch "$OP_BROWSERS" \
+                && { grep -qx zen-bin "$OP_BROWSERS" 2>/dev/null \
+                    || echo zen-bin | sudo tee -a "$OP_BROWSERS" > /dev/null; } \
+                && sudo chown root:root "$OP_BROWSERS" \
+                && sudo chmod 755 "$OP_BROWSERS"
+        } || echo "  1Password/Zen config failed — re-run install.sh from a real terminal"
+    fi
+fi
+
 # Install oh-my-zsh if not present
 FRESH_ZSH_INSTALL=false
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
@@ -204,11 +223,13 @@ for pkg in "${PACKAGES[@]}"; do
         # Skip if target doesn't exist
         [[ ! -e "$target" ]] && continue
 
-        # Skip if already a symlink to our file
-        if [[ -L "$target" ]]; then
-            link_target="$(readlink -f "$target")"
-            our_file="$(readlink -f "$file")"
-            [[ "$link_target" == "$our_file" ]] && continue
+        # Skip if target already resolves to our file. readlink -f follows
+        # symlinks in any path component, so this catches both direct symlinks
+        # AND folded parent dirs (e.g. ~/.claude → source/claude/.claude/) —
+        # without this, "rm -rf $target" on a folded path would delete the
+        # tracked file from the source repo.
+        if [[ "$(readlink -f "$target")" == "$(readlink -f "$file")" ]]; then
+            continue
         fi
 
         # Auto-override default .zshrc if we just installed oh-my-zsh
@@ -245,11 +266,14 @@ for pkg in "${PACKAGES[@]}"; do
     done < <(find "$pkg" -type f -print0)
 done
 
-# Stow all configs
+# Stow all configs. --no-folding forces stow to create real directories at
+# the target and only symlink individual files — without it, stow folds whole
+# directories (e.g. makes ~/.claude a symlink to source/claude/.claude/),
+# which means anything the app writes there lands inside this repo.
 echo "Linking config..."
 for pkg in "${PACKAGES[@]}"; do
     if [[ -d "$pkg" ]]; then
-        stow -v -R -t ~ "$pkg" 2>/dev/null || true
+        stow -v -R --no-folding -t ~ "$pkg" 2>/dev/null || true
     fi
 done
 
