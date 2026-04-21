@@ -210,6 +210,21 @@ if [[ -z "$(git config --global user.email)" ]]; then
     git config --global user.email "19895932+jackthb@users.noreply.github.com"
 fi
 
+# Return 0 if the given path (relative to a package root, with leading `/`)
+# matches any regex in that package's .stow-local-ignore — mirroring the subset
+# of stow's ignore semantics we actually use (anchored regex, one per line).
+is_stow_ignored() {
+    local pkg="$1" rel="$2"
+    local ignore="$pkg/.stow-local-ignore"
+    [[ -f "$ignore" ]] || return 1
+    local pattern
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+        [[ "/$rel" =~ $pattern ]] && return 0
+    done < "$ignore"
+    return 1
+}
+
 # Handle conflicts
 for pkg in "${PACKAGES[@]}"; do
     if [[ ! -d "$pkg" ]]; then
@@ -219,6 +234,9 @@ for pkg in "${PACKAGES[@]}"; do
     while IFS= read -r -d '' file; do
         rel_path="${file#$pkg/}"
         target="$HOME/$rel_path"
+
+        # Skip files stow is ignoring — they're seeded separately below.
+        is_stow_ignored "$pkg" "$rel_path" && continue
 
         # Skip if target doesn't exist
         [[ ! -e "$target" ]] && continue
@@ -295,6 +313,22 @@ for pkg in "${PACKAGES[@]}"; do
     if [[ -d "$pkg" ]]; then
         stow -v -R --no-folding -t ~ "$pkg" 2>/dev/null || true
     fi
+done
+
+# Seed stow-ignored files. These are config the app writes to at runtime
+# (e.g. Claude Code's settings.json), so they can't be symlinks back into the
+# repo. We copy them on first install and leave local edits alone afterwards.
+for pkg in "${PACKAGES[@]}"; do
+    [[ -d "$pkg" ]] || continue
+    while IFS= read -r -d '' file; do
+        rel_path="${file#$pkg/}"
+        is_stow_ignored "$pkg" "$rel_path" || continue
+        target="$HOME/$rel_path"
+        [[ -e "$target" ]] && continue
+        echo "Seeding $target..."
+        mkdir -p "$(dirname "$target")"
+        cp "$file" "$target"
+    done < <(find "$pkg" -type f -print0)
 done
 
 echo "Done!"
