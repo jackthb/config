@@ -91,6 +91,19 @@ if ! command -v starship &> /dev/null; then
     esac
 fi
 
+# Claude Code: official native installer drops a symlink into ~/.local/bin.
+# Unfold ~/.local/bin if a previous stow run folded the whole directory into
+# the source — otherwise the installer's symlink ends up inside this repo.
+if [[ -L "$HOME/.local/bin" ]]; then
+    rm "$HOME/.local/bin"
+fi
+mkdir -p "$HOME/.local/bin"
+rm -f "$CONFIG_DIR/zsh/.local/bin/claude"
+if ! command -v claude &> /dev/null; then
+    echo "Installing Claude Code..."
+    curl -fsSL https://claude.ai/install.sh | bash
+fi
+
 # GUI apps: 1Password + Ghostty (pacman and brew fully wired; other distros stubbed)
 case "$PKG_MANAGER" in
     brew)
@@ -138,6 +151,23 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     echo "Installing oh-my-zsh..."
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     FRESH_ZSH_INSTALL=true
+fi
+
+# Set zsh as the login shell on Linux (macOS already defaults to zsh).
+# Read the real login shell from passwd — $SHELL inherits from the parent
+# process and can lie about what's actually configured for the user.
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    ZSH_PATH="$(command -v zsh)"
+    LOGIN_SHELL="$(getent passwd "$USER" | cut -d: -f7)"
+    if [[ -n "$ZSH_PATH" && "$LOGIN_SHELL" != "$ZSH_PATH" ]]; then
+        echo "Setting zsh as default shell (was $LOGIN_SHELL)..."
+        if ! grep -qx "$ZSH_PATH" /etc/shells 2>/dev/null; then
+            echo "$ZSH_PATH" | sudo tee -a /etc/shells > /dev/null
+        fi
+        # Use sudo chsh — the sudo prompt is cacheable; the chsh PAM prompt
+        # asking for the user's password isn't, and fails in non-TTY runs.
+        sudo chsh -s "$ZSH_PATH" "$USER" || echo "  chsh failed — run manually: sudo chsh -s $ZSH_PATH $USER"
+    fi
 fi
 
 # Install zsh plugins
