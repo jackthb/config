@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship claude)
+PACKAGES=(zsh starship claude fastfetch)
 
 # Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -59,7 +59,7 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
 fi
 
 # Collect and install missing base packages (cmd:pkg — all distros share these names)
-MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "tmux:tmux")
+MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "tmux:tmux" "fastfetch:fastfetch")
 PKGS_TO_INSTALL=()
 for entry in "${MAPPINGS[@]}"; do
     cmd="${entry%%:*}"

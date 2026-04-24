@@ -50,6 +50,16 @@ export NVM_DIR="$HOME/.nvm"
 # Machine-specific config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
+# CachyOS-style welcome: fastfetch on top-level interactive shells.
+# Logo is picked per-OS; config.jsonc's logo is used only on Linux.
+if [[ -o interactive && $SHLVL -eq 1 ]] && command -v fastfetch >/dev/null 2>&1; then
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    fastfetch --logo apple_small
+  else
+    fastfetch
+  fi
+fi
+
 gcol() { git checkout "$@" }
 _gcol() {
   local -a branches
@@ -85,7 +95,7 @@ add-zsh-hook precmd _config_notify
   git fetch -q 2>/dev/null
   lines=()
   if [[ $(git rev-list HEAD..@{u} --count 2>/dev/null) -gt 0 ]]; then
-    git pull --ff-only -q && for pkg in zsh starship claude; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && lines+=("${green}config: synced${reset}")
+    git pull --ff-only -q && for pkg in zsh starship claude fastfetch; do [[ -d "$pkg" ]] && stow -R -t ~ "$pkg" 2>/dev/null; done && lines+=("${green}config: synced${reset}")
   fi
   if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
     lines+=("${yellow}config: uncommitted changes${reset}")
