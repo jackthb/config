@@ -79,7 +79,8 @@ add-zsh-hook precmd _config_notify
 
 (
   config_dir="${CONFIG_DIR:-$HOME/code/config}"
-  cd "$config_dir"
+  [[ -d "$config_dir" ]] || exit 0
+  cd "$config_dir" || exit 0
   green='\033[0;32m'; yellow='\033[0;33m'; reset='\033[0m'
   git fetch -q 2>/dev/null
   lines=()
