@@ -10,7 +10,7 @@ $character"""
 [aws]
 format = "on [$symbol($profile )]($style)"
 style = "yellow"
-symbol = "☁️ "
+symbol = "☁ "
 
 [directory]
 truncation_length = 3

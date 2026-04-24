@@ -27,7 +27,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "hooks": {
     "PermissionRequest": [
       {
@@ -91,7 +90,16 @@
     "frontend-design@claude-plugins-official": true,
     "engineering-core@perk": true,
     "pyright-lsp@claude-plugins-official": true,
-    "observability@perk": true
+    "observability@perk": true,
+    "platform@perk": true
+  },
+  "extraKnownMarketplaces": {
+    "perk": {
+      "source": {
+        "source": "github",
+        "repo": "travelperk/tk-ai-agent-toolkit"
+      }
+    }
   },
   "effortLevel": "high",
   "voice": {
@@ -99,6 +107,10 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "theme": "light",
+  "preferredNotifChannel": "notifications_disabled",
+  "teammateMode": "tmux",
+  "agentPushNotifEnabled": false,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
 }
