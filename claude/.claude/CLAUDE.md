@@ -7,6 +7,7 @@
 - dont commit with all of your "co-author" stuff. ever
 - please do not guess, if it's not clear what's wrong. ask for clarification
 - Always ask before committing, never do any commits without confirming first.
+- "I don't care" means DON'T DO IT — it signals disinterest, not consent. Same for "yeah, I don't care" or similar. Never interpret it as approval to proceed. If unsure whether I want something done, ask.
 
 ## Git
 

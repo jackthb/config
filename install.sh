@@ -35,10 +35,13 @@ native_install() {
     esac
 }
 
+SYNCED=false
 native_sync() {
+    [[ "$SYNCED" == true ]] && return
     case "$PKG_MANAGER" in
         apt) sudo apt update ;;
     esac
+    SYNCED=true
 }
 
 # Install Homebrew on macOS (or as Linux fallback)
@@ -76,6 +79,7 @@ fi
 # GitHub CLI (package name differs on pacman)
 if ! command -v gh &> /dev/null; then
     echo "Installing gh..."
+    native_sync
     case "$PKG_MANAGER" in
         pacman) native_install github-cli ;;
         *)      native_install gh ;;
@@ -109,6 +113,7 @@ fi
 if ! command -v codex &> /dev/null; then
     if ! command -v npm &> /dev/null; then
         echo "Installing node/npm..."
+        native_sync
         case "$PKG_MANAGER" in
             brew) native_install node ;;
             *)    native_install npm ;;
