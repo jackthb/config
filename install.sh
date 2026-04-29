@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship claude fastfetch)
+PACKAGES=(zsh starship claude fastfetch ghostty)
 
 # Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -132,11 +132,25 @@ fi
 case "$PKG_MANAGER" in
     brew)
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            for cask in 1password ghostty; do
-                if ! brew list --cask "$cask" &> /dev/null; then
-                    echo "Installing $cask..."
-                    brew install --cask "$cask"
+            # Each entry is "cask:install-path-glob" — we treat the cask as
+            # already present if EITHER brew tracks it OR the artifact exists
+            # on disk. `brew list` alone misses apps/fonts installed manually
+            # (e.g. 1Password from the website), and trying to install over
+            # them either errors out or needs sudo to adopt.
+            for entry in \
+                "1password:/Applications/1Password.app" \
+                "ghostty:/Applications/Ghostty.app" \
+                "font-hasklug-nerd-font:$HOME/Library/Fonts/HasklugNerd*"; do
+                cask="${entry%%:*}"
+                glob="${entry#*:}"
+                if brew list --cask "$cask" &> /dev/null; then
+                    continue
                 fi
+                if compgen -G "$glob" > /dev/null; then
+                    continue
+                fi
+                echo "Installing $cask..."
+                brew install --cask "$cask"
             done
         else
             echo "Skipping 1Password/Ghostty: linuxbrew doesn't support casks."
@@ -168,6 +182,25 @@ case "$PKG_MANAGER" in
         echo "Skipping 1Password/Ghostty: not wired up for $PKG_MANAGER yet."
         ;;
 esac
+
+# Hasklug Nerd Font on Linux: no canonical distro package, pull from upstream
+# release zip into the per-user font dir and refresh the font cache.
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    FONT_DIR="$HOME/.local/share/fonts/Hasklug"
+    if [[ ! -d "$FONT_DIR" ]] && command -v curl &> /dev/null && command -v unzip &> /dev/null; then
+        echo "Installing Hasklug Nerd Font..."
+        tmp="$(mktemp -d)"
+        if curl -fsSL -o "$tmp/Hasklig.zip" \
+            https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip; then
+            mkdir -p "$FONT_DIR"
+            unzip -q "$tmp/Hasklig.zip" -d "$FONT_DIR"
+            command -v fc-cache &> /dev/null && fc-cache -f "$FONT_DIR" > /dev/null
+        else
+            echo "  Hasklug Nerd Font download failed — install manually from https://www.nerdfonts.com/font-downloads"
+        fi
+        rm -rf "$tmp"
+    fi
+fi
 
 # 1Password: allow Zen Browser to talk to the desktop app via the custom
 # allowed-browsers list. Both apps must be installed natively (not flatpak/snap)

@@ -27,6 +27,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "haiku",
   "hooks": {
     "PermissionRequest": [
       {
@@ -101,7 +102,7 @@
       }
     }
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "voice": {
     "enabled": true,
     "mode": "hold"
