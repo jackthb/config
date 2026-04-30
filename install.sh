@@ -140,7 +140,7 @@ case "$PKG_MANAGER" in
             for entry in \
                 "1password:/Applications/1Password.app" \
                 "ghostty:/Applications/Ghostty.app" \
-                "font-hasklug-nerd-font:$HOME/Library/Fonts/HasklugNerd*"; do
+                "font-jetbrains-mono-nerd-font:$HOME/Library/Fonts/JetBrainsMonoNerdFont*"; do
                 cask="${entry%%:*}"
                 glob="${entry#*:}"
                 if brew list --cask "$cask" &> /dev/null; then
@@ -183,23 +183,27 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
-# Hasklug Nerd Font on Linux: no canonical distro package, pull from upstream
-# release zip into the per-user font dir and refresh the font cache.
+# JetBrains Mono Nerd Font on Linux
 if [[ "$OSTYPE" != "darwin"* ]]; then
-    FONT_DIR="$HOME/.local/share/fonts/Hasklug"
-    if [[ ! -d "$FONT_DIR" ]] && command -v curl &> /dev/null && command -v unzip &> /dev/null; then
-        echo "Installing Hasklug Nerd Font..."
-        tmp="$(mktemp -d)"
-        if curl -fsSL -o "$tmp/Hasklig.zip" \
-            https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip; then
-            mkdir -p "$FONT_DIR"
-            unzip -q "$tmp/Hasklig.zip" -d "$FONT_DIR"
-            command -v fc-cache &> /dev/null && fc-cache -f "$FONT_DIR" > /dev/null
-        else
-            echo "  Hasklug Nerd Font download failed — install manually from https://www.nerdfonts.com/font-downloads"
-        fi
-        rm -rf "$tmp"
-    fi
+    case "$PKG_MANAGER" in
+        pacman) ! pacman -Qi ttf-jetbrains-mono-nerd &> /dev/null && native_install ttf-jetbrains-mono-nerd || true ;;
+        *)
+            FONT_DIR="$HOME/.local/share/fonts/JetBrainsMono"
+            if [[ ! -d "$FONT_DIR" ]] && command -v curl &> /dev/null && command -v unzip &> /dev/null; then
+                echo "Installing JetBrains Mono Nerd Font..."
+                tmp="$(mktemp -d)"
+                if curl -fsSL -o "$tmp/JetBrainsMono.zip" \
+                    https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip; then
+                    mkdir -p "$FONT_DIR"
+                    unzip -q "$tmp/JetBrainsMono.zip" -d "$FONT_DIR"
+                    command -v fc-cache &> /dev/null && fc-cache -f "$FONT_DIR" > /dev/null
+                else
+                    echo "  JetBrains Mono Nerd Font download failed — install manually from https://www.nerdfonts.com/font-downloads"
+                fi
+                rm -rf "$tmp"
+            fi
+            ;;
+    esac
 fi
 
 # 1Password: allow Zen Browser to talk to the desktop app via the custom
@@ -265,6 +269,9 @@ if [[ -z "$(git config --global user.name)" ]]; then
 fi
 if [[ -z "$(git config --global user.email)" ]]; then
     git config --global user.email "19895932+jackthb@users.noreply.github.com"
+fi
+if [[ "$(git config --global core.editor)" != "nvim" ]]; then
+    git config --global core.editor nvim
 fi
 
 # Return 0 if the given path (relative to a package root, with leading `/`)
