@@ -27,7 +27,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "haiku",
   "hooks": {
     "PermissionRequest": [
       {

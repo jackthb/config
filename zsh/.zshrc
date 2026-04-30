@@ -42,10 +42,20 @@ export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
 # Starship prompt
 eval "$(starship init zsh)"
 
-# nvm (requires ~/.local/bin/hash wrapper for zsh compatibility)
+# nvm — lazy-loaded to avoid ~2.5s startup cost.
+# nvm/node/npm/npx trigger the real load on first use.
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+    _nvm_load() {
+        unset -f nvm node npm npx
+        \. "$NVM_DIR/nvm.sh"
+        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    }
+    nvm()  { _nvm_load && nvm "$@"; }
+    node() { _nvm_load && node "$@"; }
+    npm()  { _nvm_load && npm "$@"; }
+    npx()  { _nvm_load && npx "$@"; }
+fi
 
 # Machine-specific config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
