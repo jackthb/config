@@ -95,6 +95,54 @@ if ! command -v starship &> /dev/null; then
     esac
 fi
 
+# Nerd Font: JetBrainsMono — provides the glyphs starship/ghostty assume.
+# Raspberry Pi OS (apt) and other Debian-likes have no native nerd-font package,
+# so we drop the upstream zip into ~/.local/share/fonts and refresh the cache.
+install_nerd_font_manual() {
+    local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+    local dir="$HOME/.local/share/fonts/JetBrainsMono"
+    [[ -d "$dir" ]] && return 0
+    echo "Installing JetBrainsMono Nerd Font..."
+    local need=()
+    command -v unzip &> /dev/null || need+=(unzip)
+    command -v fc-cache &> /dev/null || need+=(fontconfig)
+    if [[ ${#need[@]} -gt 0 ]]; then
+        native_sync
+        native_install "${need[@]}"
+    fi
+    local tmp
+    tmp="$(mktemp -d)"
+    curl -fsSL "$url" -o "$tmp/font.zip"
+    mkdir -p "$dir"
+    unzip -q "$tmp/font.zip" -d "$dir"
+    rm -rf "$tmp"
+    fc-cache -f "$HOME/.local/share/fonts" > /dev/null
+}
+
+if ! { fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font"; } \
+    && ! ls "$HOME/Library/Fonts" 2>/dev/null | grep -qi "JetBrainsMono.*NerdFont"; then
+    case "$PKG_MANAGER" in
+        brew)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                echo "Installing JetBrainsMono Nerd Font..."
+                brew install --cask font-jetbrains-mono-nerd-font
+            else
+                install_nerd_font_manual
+            fi
+            ;;
+        pacman)
+            echo "Installing JetBrainsMono Nerd Font..."
+            native_install ttf-jetbrains-mono-nerd
+            ;;
+        apt|dnf|zypper)
+            install_nerd_font_manual
+            ;;
+        *)
+            install_nerd_font_manual
+            ;;
+    esac
+fi
+
 # Claude Code: official native installer drops a symlink into ~/.local/bin.
 # Unfold ~/.local/bin if a previous stow run folded the whole directory into
 # the source — otherwise the installer's symlink ends up inside this repo.
