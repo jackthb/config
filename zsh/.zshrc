@@ -1,19 +1,60 @@
-# Oh My Zsh
-export ZSH="$HOME/.oh-my-zsh"
-plugins=(git z zsh-autosuggestions zsh-syntax-highlighting python)
-source $ZSH/oh-my-zsh.sh
+# Keep shell startup intentional and small: no framework, just the pieces used daily.
 
-# Homebrew
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
-    # macOS Apple Silicon
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -f "/usr/local/bin/brew" ]]; then
-    # macOS Intel
-    eval "$(/usr/local/bin/brew shellenv)"
-elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-    # Linux/WSL
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# Homebrew paths without forking `brew shellenv` on every new shell.
+if [[ -d "/opt/homebrew" ]]; then
+    export HOMEBREW_PREFIX="/opt/homebrew"
+    export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
+    export HOMEBREW_REPOSITORY="/opt/homebrew"
+    path=("/opt/homebrew/bin" "/opt/homebrew/sbin" $path)
+elif [[ -d "/usr/local/Homebrew" || -x "/usr/local/bin/brew" ]]; then
+    export HOMEBREW_PREFIX="/usr/local"
+    export HOMEBREW_CELLAR="/usr/local/Cellar"
+    export HOMEBREW_REPOSITORY="/usr/local/Homebrew"
+    path=("/usr/local/bin" "/usr/local/sbin" $path)
+elif [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
+    export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+    export HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
+    export HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
+    path=("/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin" $path)
 fi
+
+# Local binaries
+export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
+
+# Zsh basics formerly covered by oh-my-zsh defaults/plugins.
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt append_history share_history hist_ignore_dups hist_ignore_space hist_reduce_blanks
+setopt auto_cd auto_pushd pushd_ignore_dups interactive_comments extended_glob
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# Completion cache: run the expensive audit at most once per day.
+autoload -Uz compinit
+if [[ -n "$HOME/.zcompdump"(#qNmh-24) ]]; then
+    compinit -C
+else
+    compinit
+fi
+
+# Lightweight plugins cloned by install.sh; source files directly to avoid a plugin manager/framework.
+ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
+[[ -r "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+[[ -r "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+# Minimal helper from oh-my-zsh's git plugin used by the `refresh` alias.
+git_main_branch() {
+    command git rev-parse --git-dir >/dev/null 2>&1 || return 1
+    local ref
+    for ref in refs/heads/main refs/heads/trunk refs/heads/mainline refs/heads/default refs/heads/stable refs/heads/master; do
+        if command git show-ref -q --verify "$ref"; then
+            print -r -- "${ref##*/}"
+            return 0
+        fi
+    done
+    command git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##'
+}
 
 # Aliases
 alias ..="cd .."
@@ -36,19 +77,16 @@ if [[ -n "$WSL_DISTRO_NAME" ]]; then
     alias ssh-add="ssh-add.exe"
 fi
 
-# Local binaries
-export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
-
 # Starship prompt
 eval "$(starship init zsh)"
 
-# nvm — lazy-loaded to avoid ~2.5s startup cost.
+# nvm — lazy-loaded to avoid multi-second startup cost.
 # nvm/node/npm/npx trigger the real load on first use.
 export NVM_DIR="$HOME/.nvm"
 if [[ -s "$NVM_DIR/nvm.sh" ]]; then
     _nvm_load() {
         unset -f nvm node npm npx
-        \. "$NVM_DIR/nvm.sh"
+        \. "$NVM_DIR/nvm.sh" --no-use
         [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
     }
     nvm()  { _nvm_load && nvm "$@"; }
@@ -86,11 +124,11 @@ case ":$PATH:" in
 esac
 # pnpm end
 
+# Windows Terminal shell integration is useful only when `wt` exists; keep it after the fast path.
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
-
 # bun completions
-[ -s "/home/jack/.bun/_bun" ] && source "/home/jack/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"

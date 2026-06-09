@@ -273,14 +273,6 @@ if [[ "$OSTYPE" != "darwin"* ]] && command -v 1password &> /dev/null; then
     fi
 fi
 
-# Install oh-my-zsh if not present
-FRESH_ZSH_INSTALL=false
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-    echo "Installing oh-my-zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    FRESH_ZSH_INSTALL=true
-fi
-
 # Set zsh as the login shell on Linux (macOS already defaults to zsh).
 # Read the real login shell from passwd — $SHELL inherits from the parent
 # process and can lie about what's actually configured for the user.
@@ -298,17 +290,19 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     fi
 fi
 
-# Install zsh plugins
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+# Install zsh plugins directly; .zshrc sources these files without oh-my-zsh
+# or a plugin manager so every new shell avoids framework startup overhead.
+ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
+mkdir -p "$ZSH_PLUGIN_DIR"
 
-if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
+if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-autosuggestions" ]]; then
     echo "Installing zsh-autosuggestions..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_PLUGIN_DIR/zsh-autosuggestions"
 fi
 
-if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
+if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting" ]]; then
     echo "Installing zsh-syntax-highlighting..."
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting"
 fi
 
 # Set git identity if not already configured
@@ -359,13 +353,6 @@ for pkg in "${PACKAGES[@]}"; do
         # without this, "rm -rf $target" on a folded path would delete the
         # tracked file from the source repo.
         if [[ "$(readlink -f "$target")" == "$(readlink -f "$file")" ]]; then
-            continue
-        fi
-
-        # Auto-override default .zshrc if we just installed oh-my-zsh
-        if [[ "$FRESH_ZSH_INSTALL" == true && "$rel_path" == ".zshrc" ]]; then
-            echo "Replacing default oh-my-zsh .zshrc with config..."
-            rm -rf "$target"
             continue
         fi
 
