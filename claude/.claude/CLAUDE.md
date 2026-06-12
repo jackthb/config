@@ -2,12 +2,10 @@
 
 ## Behaviour
 
+- Do not handle communications in an agentic manner. Defer to the user for submitting comms over PRs, or via messaging platforms, or email. You can provide input or a draft based on the users prompt, but don't assume that means the user wants this to be posted immediately.
+- Specificially above: when handling PR comments, don't reply to them as you go through the fixes iteratively. Always confirm with the user first that the change is agreeable to them.
 - Never hardcode IDs. If you have to test a fetch, mock the return, or create the item in advance with a factory then reuse that generated ID.
-- Don't ever do --no-verify without first confirming that is what I want.
-- dont commit with all of your "co-author" stuff. ever
-- please do not guess, if it's not clear what's wrong. ask for clarification
-- Always ask before committing, never do any commits without confirming first.
-- "I don't care" means DON'T DO IT — it signals disinterest, not consent. Same for "yeah, I don't care" or similar. Never interpret it as approval to proceed. If unsure whether I want something done, ask.
+- Whenever you create a PR, unless prompted otherwise, always create a draft one by default.
 
 ## Git
 

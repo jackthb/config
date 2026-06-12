@@ -43,18 +43,12 @@ ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-# Minimal helper from oh-my-zsh's git plugin used by the `refresh` alias.
-git_main_branch() {
-    command git rev-parse --git-dir >/dev/null 2>&1 || return 1
-    local ref
-    for ref in refs/heads/main refs/heads/trunk refs/heads/mainline refs/heads/default refs/heads/stable refs/heads/master; do
-        if command git show-ref -q --verify "$ref"; then
-            print -r -- "${ref##*/}"
-            return 0
-        fi
-    done
-    command git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##'
-}
+# Oh-my-zsh git aliases without loading the full framework.
+OMZ_GIT="${ZSH:-$HOME/.oh-my-zsh}"
+if [[ -r "$OMZ_GIT/plugins/git/git.plugin.zsh" ]]; then
+    [[ -r "$OMZ_GIT/lib/git.zsh" ]] && source "$OMZ_GIT/lib/git.zsh"
+    source "$OMZ_GIT/plugins/git/git.plugin.zsh"
+fi
 
 # Aliases
 alias ..="cd .."
@@ -67,8 +61,8 @@ alias vact="source .venv/bin/activate"
 alias refresh='git fetch origin $(git_main_branch):$(git_main_branch)'
 alias dcu="docker compose up"
 alias dcd="docker compose down"
-alias zshconfig="vi ~/.zshrc"
-alias zshlocal="vi ~/.zshrc.local"
+alias zshconfig="nvim ~/.zshrc"
+alias zshlocal="nvim ~/.zshrc.local"
 alias cdconf="cd ~/code/config"
 
 # Use Windows SSH in WSL

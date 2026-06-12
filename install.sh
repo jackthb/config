@@ -290,10 +290,16 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     fi
 fi
 
-# Install zsh plugins directly; .zshrc sources these files without oh-my-zsh
-# or a plugin manager so every new shell avoids framework startup overhead.
+# Install zsh plugins directly; .zshrc sources these files without loading
+# oh-my-zsh as a framework so every new shell avoids framework startup overhead.
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
 mkdir -p "$ZSH_PLUGIN_DIR"
+
+OMZ_DIR="${ZSH:-$HOME/.oh-my-zsh}"
+if [[ ! -d "$OMZ_DIR/.git" ]]; then
+    echo "Installing oh-my-zsh (git plugin aliases only)..."
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$OMZ_DIR"
+fi
 
 if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-autosuggestions" ]]; then
     echo "Installing zsh-autosuggestions..."
