@@ -128,11 +128,8 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# tmux: bare `tmux` attaches to most-recent session, or creates `main` if none exist
-tmux() {
-  if [[ $# -eq 0 ]]; then
-    command tmux attach 2>/dev/null || command tmux new -s main
-  else
-    command tmux "$@"
-  fi
-}
+# auto attach to tmux
+if [[ -n "$SSH_CONNECTION" ]] && [[ -z "$TMUX" ]]; then
+  tmux attach -t main 2>/dev/null || tmux new -s main
+fi
+
