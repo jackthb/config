@@ -129,7 +129,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # auto attach to tmux
-if [[ -n "$SSH_CONNECTION" ]] && [[ -z "$TMUX" ]]; then
+# auto attach to tmux
+if [[ -z "$TMUX" ]]; then
   tmux attach -t main 2>/dev/null || tmux new -s main
 fi
-
