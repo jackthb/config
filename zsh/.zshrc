@@ -38,6 +38,13 @@ else
     compinit
 fi
 
+# Key bindings.
+# Ctrl+Arrow word navigation, bound to the literal escape sequences so it works
+# under any $TERM — notably inside tmux (tmux-256color), where terminfo-based
+# bindings silently break.
+bindkey '^[[1;5C' forward-word     # Ctrl+Right
+bindkey '^[[1;5D' backward-word    # Ctrl+Left
+
 # Lightweight plugins cloned by install.sh; source files directly to avoid a plugin manager/framework.
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
