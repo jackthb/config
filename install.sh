@@ -76,6 +76,15 @@ if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
     native_install "${PKGS_TO_INSTALL[@]}"
 fi
 
+# wl-clipboard: provides wl-copy/wl-paste so Wayland apps and terminal tools
+# (Claude Code's image paste, tmux-yank) can read/write the system clipboard.
+# Linux/Wayland only — macOS uses pbcopy/pbpaste. Same package name everywhere.
+if [[ "$OSTYPE" != "darwin"* ]] && ! command -v wl-paste &> /dev/null; then
+    echo "Installing wl-clipboard..."
+    native_sync
+    native_install wl-clipboard
+fi
+
 # GitHub CLI (package name differs on pacman)
 if ! command -v gh &> /dev/null; then
     echo "Installing gh..."
