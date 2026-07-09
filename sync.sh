@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship claude fastfetch ghostty)
+PACKAGES=(zsh starship claude fastfetch ghostty tmux)
 
 # Detect package manager (needed only for stow + oh-my-zsh prereqs)
 if [[ "$OSTYPE" == "darwin"* ]]; then
