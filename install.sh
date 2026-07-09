@@ -420,6 +420,16 @@ for pkg in "${PACKAGES[@]}"; do
     fi
 done
 
+# TPM (Tmux Plugin Manager): clone it and install the plugins listed in
+# tmux.conf. Runs after stow so ~/.config/tmux/tmux.conf exists for TPM to read.
+# Plugins land in ~/.config/tmux/plugins (a real dir at the target, not the repo).
+TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+if [[ ! -d "$TPM_DIR" ]]; then
+    echo "Installing tmux plugins (TPM)..."
+    git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR" \
+        && "$TPM_DIR/bin/install_plugins" || true
+fi
+
 # Seed stow-ignored files. These are config the app writes to at runtime
 # (e.g. Claude Code's settings.json), so they can't be symlinks back into the
 # repo. We copy them on first install and leave local edits alone afterwards.
