@@ -435,8 +435,10 @@ done
 TPM_DIR="$HOME/.config/tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
     echo "Installing tmux plugins (TPM)..."
-    git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR" \
-        && "$TPM_DIR/bin/install_plugins" || true
+    git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
+fi
+if [[ -x "$TPM_DIR/bin/install_plugins" ]]; then
+    "$TPM_DIR/bin/install_plugins"
 fi
 
 # Seed stow-ignored files. These are config the app writes to at runtime
