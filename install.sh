@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship claude fastfetch ghostty tmux)
+PACKAGES=(zsh starship claude fastfetch ghostty)
 
 # Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -62,7 +62,7 @@ if [[ "$PKG_MANAGER" == "brew" ]]; then
 fi
 
 # Collect and install missing base packages (cmd:pkg — all distros share these names)
-MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "tmux:tmux" "fastfetch:fastfetch")
+MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "fastfetch:fastfetch")
 PKGS_TO_INSTALL=()
 for entry in "${MAPPINGS[@]}"; do
     cmd="${entry%%:*}"
@@ -77,7 +77,7 @@ if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
 fi
 
 # wl-clipboard: provides wl-copy/wl-paste so Wayland apps and terminal tools
-# (Claude Code's image paste, tmux-yank) can read/write the system clipboard.
+# (e.g. Claude Code's image paste) can read/write the system clipboard.
 # Linux/Wayland only — macOS uses pbcopy/pbpaste. Same package name everywhere.
 if [[ "$OSTYPE" != "darwin"* ]] && ! command -v wl-paste &> /dev/null; then
     echo "Installing wl-clipboard..."
@@ -428,18 +428,6 @@ for pkg in "${PACKAGES[@]}"; do
         stow -v -R --no-folding -t ~ "$pkg" 2>/dev/null || true
     fi
 done
-
-# TPM (Tmux Plugin Manager): clone it and install the plugins listed in
-# tmux.conf. Runs after stow so ~/.config/tmux/tmux.conf exists for TPM to read.
-# Plugins land in ~/.config/tmux/plugins (a real dir at the target, not the repo).
-TPM_DIR="$HOME/.config/tmux/plugins/tpm"
-if [[ ! -d "$TPM_DIR" ]]; then
-    echo "Installing tmux plugins (TPM)..."
-    git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
-fi
-if [[ -x "$TPM_DIR/bin/install_plugins" ]]; then
-    "$TPM_DIR/bin/install_plugins"
-fi
 
 # Seed stow-ignored files. These are config the app writes to at runtime
 # (e.g. Claude Code's settings.json), so they can't be symlinks back into the

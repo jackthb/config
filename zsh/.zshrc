@@ -40,8 +40,7 @@ fi
 
 # Key bindings.
 # Ctrl+Arrow word navigation, bound to the literal escape sequences so it works
-# under any $TERM — notably inside tmux (tmux-256color), where terminfo-based
-# bindings silently break.
+# under any $TERM (terminfo-based bindings silently break in some terminals).
 bindkey '^[[1;5C' forward-word     # Ctrl+Right
 bindkey '^[[1;5D' backward-word    # Ctrl+Left
 
@@ -134,9 +133,3 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-
-# auto attach to tmux
-# auto attach to tmux
-if [[ -z "$TMUX" ]]; then
-  tmux attach -t main 2>/dev/null || tmux new -s main
-fi
