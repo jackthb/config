@@ -165,6 +165,12 @@ if ! command -v claude &> /dev/null; then
     curl -fsSL https://claude.ai/install.sh | bash
 fi
 
+# Herdr: official installer drops the binary into ~/.local/bin.
+if ! command -v herdr &> /dev/null; then
+    echo "Installing herdr..."
+    curl -fsSL https://herdr.dev/install.sh | sh
+fi
+
 # Codex CLI: installed globally via npm. Pull in node/npm first if missing
 # (brew bundles npm with the node formula; other managers ship npm separately).
 if ! command -v codex &> /dev/null; then
