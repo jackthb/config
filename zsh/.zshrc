@@ -70,6 +70,7 @@ alias dcd="docker compose down"
 alias zshconfig="nvim ~/.zshrc"
 alias zshlocal="nvim ~/.zshrc.local"
 alias cdconf="cd ~/code/config"
+alias confsync="~/code/config/sync.sh"
 
 # Use Windows SSH in WSL
 if [[ -n "$WSL_DISTRO_NAME" ]]; then
