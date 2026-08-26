@@ -7,7 +7,7 @@ Development config managed with [GNU Stow](https://www.gnu.org/software/stow/).
 ```bash
 git clone git@github.com:jackthb/config.git ~/code/config
 cd ~/code/config
-./install.sh
+./sync.sh
 ```
 
 ## Post-install

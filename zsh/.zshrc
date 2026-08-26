@@ -44,7 +44,7 @@ fi
 bindkey '^[[1;5C' forward-word     # Ctrl+Right
 bindkey '^[[1;5D' backward-word    # Ctrl+Left
 
-# Lightweight plugins cloned by install.sh; source files directly to avoid a plugin manager/framework.
+# Lightweight plugins cloned by sync.sh; source files directly to avoid a plugin manager/framework.
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"

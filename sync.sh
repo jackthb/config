@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
 PACKAGES=(zsh starship claude fastfetch ghostty)
 
-# Detect package manager (needed only for stow + oh-my-zsh prereqs)
+# Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
     PKG_MANAGER="brew"
 elif command -v apt &> /dev/null && [[ -f /etc/debian_version ]]; then
@@ -22,6 +22,8 @@ elif command -v zypper &> /dev/null; then
 else
     PKG_MANAGER="brew"
 fi
+
+echo "Using package manager: $PKG_MANAGER"
 
 native_install() {
     case "$PKG_MANAGER" in
@@ -42,23 +44,258 @@ native_sync() {
     SYNCED=true
 }
 
-# Ensure stow is available (required to link configs)
-if ! command -v stow &> /dev/null; then
-    echo "Installing stow..."
+# Install Homebrew on macOS (or as Linux fallback)
+if [[ "$PKG_MANAGER" == "brew" ]]; then
+    if ! command -v brew &> /dev/null; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        # Add brew to PATH for this session
+        if [[ -f "/opt/homebrew/bin/brew" ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [[ -f "/usr/local/bin/brew" ]]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        elif [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        fi
+    fi
+fi
+
+# Collect and install missing base packages (cmd:pkg — all distros share these names)
+MAPPINGS=("zsh:zsh" "stow:stow" "nvim:neovim" "fastfetch:fastfetch")
+PKGS_TO_INSTALL=()
+for entry in "${MAPPINGS[@]}"; do
+    cmd="${entry%%:*}"
+    pkg="${entry##*:}"
+    command -v "$cmd" &> /dev/null || PKGS_TO_INSTALL+=("$pkg")
+done
+
+if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
+    echo "Installing ${PKGS_TO_INSTALL[*]}..."
     native_sync
-    native_install stow
+    native_install "${PKGS_TO_INSTALL[@]}"
 fi
 
-# Ensure oh-my-zsh is present (the zsh config depends on it)
-FRESH_ZSH_INSTALL=false
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-    echo "Installing oh-my-zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    FRESH_ZSH_INSTALL=true
+# wl-clipboard: provides wl-copy/wl-paste so Wayland apps and terminal tools
+# (e.g. Claude Code's image paste) can read/write the system clipboard.
+# Linux/Wayland only — macOS uses pbcopy/pbpaste. Same package name everywhere.
+if [[ "$OSTYPE" != "darwin"* ]] && ! command -v wl-paste &> /dev/null; then
+    echo "Installing wl-clipboard..."
+    native_sync
+    native_install wl-clipboard
 fi
 
-# Set zsh as the login shell on Linux (macOS already defaults to zsh)
-if [[ "$OSTYPE" != "darwin"* ]] && command -v zsh &> /dev/null; then
+# GitHub CLI (package name differs on pacman)
+if ! command -v gh &> /dev/null; then
+    echo "Installing gh..."
+    native_sync
+    case "$PKG_MANAGER" in
+        pacman) native_install github-cli ;;
+        *)      native_install gh ;;
+    esac
+fi
+
+# Starship: packaged on brew/pacman, upstream installer elsewhere
+if ! command -v starship &> /dev/null; then
+    echo "Installing starship..."
+    case "$PKG_MANAGER" in
+        brew|pacman) native_install starship ;;
+        *)           curl -sS https://starship.rs/install.sh | sh -s -- -y ;;
+    esac
+fi
+
+# Nerd Font: JetBrainsMono — provides the glyphs starship/ghostty assume.
+# Raspberry Pi OS (apt) and other Debian-likes have no native nerd-font package,
+# so we drop the upstream zip into ~/.local/share/fonts and refresh the cache.
+install_nerd_font_manual() {
+    local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+    local dir="$HOME/.local/share/fonts/JetBrainsMono"
+    [[ -d "$dir" ]] && return 0
+    echo "Installing JetBrainsMono Nerd Font..."
+    local need=()
+    command -v unzip &> /dev/null || need+=(unzip)
+    command -v fc-cache &> /dev/null || need+=(fontconfig)
+    if [[ ${#need[@]} -gt 0 ]]; then
+        native_sync
+        native_install "${need[@]}"
+    fi
+    local tmp
+    tmp="$(mktemp -d)"
+    curl -fsSL "$url" -o "$tmp/font.zip"
+    mkdir -p "$dir"
+    unzip -q "$tmp/font.zip" -d "$dir"
+    rm -rf "$tmp"
+    fc-cache -f "$HOME/.local/share/fonts" > /dev/null
+}
+
+if ! { fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd Font"; } \
+    && ! ls "$HOME/Library/Fonts" 2>/dev/null | grep -qi "JetBrainsMono.*NerdFont"; then
+    case "$PKG_MANAGER" in
+        brew)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                echo "Installing JetBrainsMono Nerd Font..."
+                brew install --cask font-jetbrains-mono-nerd-font
+            else
+                install_nerd_font_manual
+            fi
+            ;;
+        pacman)
+            echo "Installing JetBrainsMono Nerd Font..."
+            native_install ttf-jetbrains-mono-nerd
+            ;;
+        apt|dnf|zypper)
+            install_nerd_font_manual
+            ;;
+        *)
+            install_nerd_font_manual
+            ;;
+    esac
+fi
+
+# Claude Code: official native installer drops a symlink into ~/.local/bin.
+# Unfold ~/.local/bin if a previous stow run folded the whole directory into
+# the source — otherwise the installer's symlink ends up inside this repo.
+if [[ -L "$HOME/.local/bin" ]]; then
+    rm "$HOME/.local/bin"
+fi
+mkdir -p "$HOME/.local/bin"
+rm -f "$CONFIG_DIR/zsh/.local/bin/claude"
+if ! command -v claude &> /dev/null; then
+    echo "Installing Claude Code..."
+    curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+# Herdr: official installer drops the binary into ~/.local/bin.
+if ! command -v herdr &> /dev/null; then
+    echo "Installing herdr..."
+    curl -fsSL https://herdr.dev/install.sh | sh
+fi
+
+# Codex CLI: installed globally via npm. Pull in node/npm first if missing
+# (brew bundles npm with the node formula; other managers ship npm separately).
+if ! command -v codex &> /dev/null; then
+    if ! command -v npm &> /dev/null; then
+        echo "Installing node/npm..."
+        native_sync
+        case "$PKG_MANAGER" in
+            brew) native_install node ;;
+            *)    native_install npm ;;
+        esac
+    fi
+    echo "Installing Codex CLI..."
+    # brew's npm prefix is user-writable; system npm on Linux needs sudo.
+    if [[ -w "$(npm config get prefix)" ]]; then
+        npm install -g @openai/codex
+    else
+        sudo npm install -g @openai/codex
+    fi
+fi
+
+# GUI apps: 1Password + Ghostty (pacman and brew fully wired; other distros stubbed)
+case "$PKG_MANAGER" in
+    brew)
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # Each entry is "cask:install-path-glob" — we treat the cask as
+            # already present if EITHER brew tracks it OR the artifact exists
+            # on disk. `brew list` alone misses apps/fonts installed manually
+            # (e.g. 1Password from the website), and trying to install over
+            # them either errors out or needs sudo to adopt.
+            # One `brew list --cask` call for all three — each brew invocation
+            # has real startup overhead, so checking casks individually was
+            # the slowest part of a no-op run.
+            INSTALLED_CASKS="$(brew list --cask 2> /dev/null)"
+            for entry in \
+                "1password:/Applications/1Password.app" \
+                "ghostty:/Applications/Ghostty.app" \
+                "font-jetbrains-mono-nerd-font:$HOME/Library/Fonts/JetBrainsMonoNerdFont*"; do
+                cask="${entry%%:*}"
+                glob="${entry#*:}"
+                if grep -qx "$cask" <<< "$INSTALLED_CASKS"; then
+                    continue
+                fi
+                if compgen -G "$glob" > /dev/null; then
+                    continue
+                fi
+                echo "Installing $cask..."
+                brew install --cask "$cask"
+            done
+        else
+            echo "Skipping 1Password/Ghostty: linuxbrew doesn't support casks."
+        fi
+        ;;
+    pacman)
+        # Ghostty is in the extra repo
+        if ! command -v ghostty &> /dev/null; then
+            echo "Installing ghostty..."
+            native_install ghostty
+        fi
+        # 1Password lives in the AUR — needs paru or yay (paru ships with CachyOS)
+        if ! pacman -Qi 1password &> /dev/null; then
+            if command -v paru &> /dev/null; then
+                echo "Installing 1Password (AUR via paru)..."
+                paru -S --noconfirm --needed 1password
+            elif command -v yay &> /dev/null; then
+                echo "Installing 1Password (AUR via yay)..."
+                yay -S --noconfirm --needed 1password
+            else
+                echo "Skipping 1Password: install paru or yay first, then: paru -S 1password"
+            fi
+        fi
+        ;;
+    *)
+        # TODO: add repos for apt/dnf/zypper — see:
+        #   1Password: https://support.1password.com/install-linux/
+        #   Ghostty:   https://ghostty.org/download
+        echo "Skipping 1Password/Ghostty: not wired up for $PKG_MANAGER yet."
+        ;;
+esac
+
+# JetBrains Mono Nerd Font on Linux
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    case "$PKG_MANAGER" in
+        pacman) ! pacman -Qi ttf-jetbrains-mono-nerd &> /dev/null && native_install ttf-jetbrains-mono-nerd || true ;;
+        *)
+            FONT_DIR="$HOME/.local/share/fonts/JetBrainsMono"
+            if [[ ! -d "$FONT_DIR" ]] && command -v curl &> /dev/null && command -v unzip &> /dev/null; then
+                echo "Installing JetBrains Mono Nerd Font..."
+                tmp="$(mktemp -d)"
+                if curl -fsSL -o "$tmp/JetBrainsMono.zip" \
+                    https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip; then
+                    mkdir -p "$FONT_DIR"
+                    unzip -q "$tmp/JetBrainsMono.zip" -d "$FONT_DIR"
+                    command -v fc-cache &> /dev/null && fc-cache -f "$FONT_DIR" > /dev/null
+                else
+                    echo "  JetBrains Mono Nerd Font download failed — install manually from https://www.nerdfonts.com/font-downloads"
+                fi
+                rm -rf "$tmp"
+            fi
+            ;;
+    esac
+fi
+
+# 1Password: allow Zen Browser to talk to the desktop app via the custom
+# allowed-browsers list. Both apps must be installed natively (not flatpak/snap)
+# and the file must be root-owned for 1Password's Native Core to verify it.
+# https://support.1password.com/connect-browser/
+if [[ "$OSTYPE" != "darwin"* ]] && command -v 1password &> /dev/null; then
+    OP_BROWSERS=/etc/1password/custom_allowed_browsers
+    if [[ ! -f "$OP_BROWSERS" ]] || ! grep -qx zen-bin "$OP_BROWSERS" 2>/dev/null; then
+        echo "Allowing Zen Browser in 1Password..."
+        {
+            sudo mkdir -p /etc/1password \
+                && sudo touch "$OP_BROWSERS" \
+                && { grep -qx zen-bin "$OP_BROWSERS" 2>/dev/null \
+                    || echo zen-bin | sudo tee -a "$OP_BROWSERS" > /dev/null; } \
+                && sudo chown root:root "$OP_BROWSERS" \
+                && sudo chmod 755 "$OP_BROWSERS"
+        } || echo "  1Password/Zen config failed — re-run sync.sh from a real terminal"
+    fi
+fi
+
+# Set zsh as the login shell on Linux (macOS already defaults to zsh).
+# Read the real login shell from passwd — $SHELL inherits from the parent
+# process and can lie about what's actually configured for the user.
+if [[ "$OSTYPE" != "darwin"* ]]; then
     ZSH_PATH="$(command -v zsh)"
     LOGIN_SHELL="$(getent passwd "$USER" | cut -d: -f7)"
     if [[ -n "$ZSH_PATH" && "$LOGIN_SHELL" != "$ZSH_PATH" ]]; then
@@ -66,21 +303,31 @@ if [[ "$OSTYPE" != "darwin"* ]] && command -v zsh &> /dev/null; then
         if ! grep -qx "$ZSH_PATH" /etc/shells 2>/dev/null; then
             echo "$ZSH_PATH" | sudo tee -a /etc/shells > /dev/null
         fi
+        # Use sudo chsh — the sudo prompt is cacheable; the chsh PAM prompt
+        # asking for the user's password isn't, and fails in non-TTY runs.
         sudo chsh -s "$ZSH_PATH" "$USER" || echo "  chsh failed — run manually: sudo chsh -s $ZSH_PATH $USER"
     fi
 fi
 
-# Install zsh plugins
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+# Install zsh plugins directly; .zshrc sources these files without loading
+# oh-my-zsh as a framework so every new shell avoids framework startup overhead.
+ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
+mkdir -p "$ZSH_PLUGIN_DIR"
 
-if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
-    echo "Installing zsh-autosuggestions..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+OMZ_DIR="${ZSH:-$HOME/.oh-my-zsh}"
+if [[ ! -d "$OMZ_DIR/.git" ]]; then
+    echo "Installing oh-my-zsh (git plugin aliases only)..."
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$OMZ_DIR"
 fi
 
-if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
+if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-autosuggestions" ]]; then
+    echo "Installing zsh-autosuggestions..."
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_PLUGIN_DIR/zsh-autosuggestions"
+fi
+
+if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting" ]]; then
     echo "Installing zsh-syntax-highlighting..."
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting"
 fi
 
 # Set git identity if not already configured
@@ -94,16 +341,9 @@ if [[ "$(git config --global core.editor)" != "nvim" ]]; then
     git config --global core.editor nvim
 fi
 
-# Unfold ~/.local/bin if a previous stow run folded it — the Claude installer
-# drops a symlink there and it must be a real directory.
-if [[ -L "$HOME/.local/bin" ]]; then
-    rm "$HOME/.local/bin"
-fi
-mkdir -p "$HOME/.local/bin"
-rm -f "$CONFIG_DIR/zsh/.local/bin/claude"
-
 # Return 0 if the given path (relative to a package root, with leading `/`)
-# matches any regex in that package's .stow-local-ignore.
+# matches any regex in that package's .stow-local-ignore — mirroring the subset
+# of stow's ignore semantics we actually use (anchored regex, one per line).
 is_stow_ignored() {
     local pkg="$1" rel="$2"
     local ignore="$pkg/.stow-local-ignore"
@@ -126,18 +366,18 @@ for pkg in "${PACKAGES[@]}"; do
         rel_path="${file#$pkg/}"
         target="$HOME/$rel_path"
 
+        # Skip files stow is ignoring — they're seeded separately below.
         is_stow_ignored "$pkg" "$rel_path" && continue
+
+        # Skip if target doesn't exist
         [[ ! -e "$target" ]] && continue
 
-        # Skip if target already points to our file (direct or via folded parent)
+        # Skip if target already resolves to our file. readlink -f follows
+        # symlinks in any path component, so this catches both direct symlinks
+        # AND folded parent dirs (e.g. ~/.claude → source/claude/.claude/) —
+        # without this, "rm -rf $target" on a folded path would delete the
+        # tracked file from the source repo.
         if [[ "$(readlink -f "$target")" == "$(readlink -f "$file")" ]]; then
-            continue
-        fi
-
-        # Auto-override default .zshrc created by a fresh oh-my-zsh install
-        if [[ "$FRESH_ZSH_INSTALL" == true && "$rel_path" == ".zshrc" ]]; then
-            echo "Replacing default oh-my-zsh .zshrc with config..."
-            rm -rf "$target"
             continue
         fi
 
@@ -168,7 +408,9 @@ for pkg in "${PACKAGES[@]}"; do
     done < <(find "$pkg" -type f -print0)
 done
 
-# Unfold any target dirs that a previous (folded) stow run turned into symlinks
+# Unfold any target dirs that a previous (folded) stow run turned into
+# symlinks pointing back into the source. We replace the symlink with a real
+# directory so apps can write runtime data there without polluting the repo.
 unfold_target() {
     local target="$1" source_dir="$2"
     [[ -L "$target" ]] || return 0
@@ -186,8 +428,10 @@ for pkg in "${PACKAGES[@]}"; do
     done < <(find "$pkg" -mindepth 1 -type d -print0)
 done
 
-# Stow all configs. --no-folding forces real directories at the target so
-# apps can write runtime data there without polluting the repo.
+# Stow all configs. --no-folding forces stow to create real directories at
+# the target and only symlink individual files — without it, stow folds whole
+# directories (e.g. makes ~/.claude a symlink to source/claude/.claude/),
+# which means anything the app writes there lands inside this repo.
 echo "Linking config..."
 for pkg in "${PACKAGES[@]}"; do
     if [[ -d "$pkg" ]]; then
@@ -195,7 +439,9 @@ for pkg in "${PACKAGES[@]}"; do
     fi
 done
 
-# Seed stow-ignored files (copied once on first run, local edits preserved)
+# Seed stow-ignored files. These are config the app writes to at runtime
+# (e.g. Claude Code's settings.json), so they can't be symlinks back into the
+# repo. We copy them on first install and leave local edits alone afterwards.
 for pkg in "${PACKAGES[@]}"; do
     [[ -d "$pkg" ]] || continue
     while IFS= read -r -d '' file; do
