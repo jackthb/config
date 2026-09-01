@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 CONFIG_DIR="$(pwd)"
-PACKAGES=(zsh starship claude fastfetch ghostty)
+PACKAGES=(zsh starship claude fastfetch ghostty herdr)
 
 # Detect package manager
 if [[ "$OSTYPE" == "darwin"* ]]; then
