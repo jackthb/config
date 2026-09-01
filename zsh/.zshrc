@@ -31,11 +31,15 @@ zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
 # Completion cache: run the expensive audit at most once per day.
+# compinit only rewrites .zcompdump's contents when completion functions
+# change, so its mtime can go stale for weeks and this freshness check would
+# otherwise never pass; touch it after every full run to keep the check honest.
 autoload -Uz compinit
 if [[ -n "$HOME/.zcompdump"(#qNmh-24) ]]; then
     compinit -C
 else
     compinit
+    touch "$HOME/.zcompdump"
 fi
 
 # Key bindings.
