@@ -28,7 +28,11 @@
     ],
     "profiles":
     {
-        "defaults": {},
+        "defaults": {
+            "colorScheme": "One Half Light",
+            "opacity": 80,
+            "useAcrylic": true
+        },
         "list":
         [
             {
