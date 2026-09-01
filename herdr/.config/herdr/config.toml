@@ -1,1 +1,50 @@
 onboarding = false
+
+[theme]
+name = "gruvbox"
+auto_switch = true
+dark_name = "gruvbox"
+light_name = "gruvbox-light"
+
+[terminal]
+shell_mode = "auto"
+new_cwd = "follow"
+
+[update]
+channel = "stable"
+version_check = true
+manifest_check = true
+
+[ui]
+agent_panel_sort = "spaces"
+show_agent_labels_on_pane_borders = true
+copy_on_select = true
+mouse_capture = true
+host_cursor = "auto"
+confirm_close = true
+prompt_new_tab_name = false
+prompt_new_workspace_name = false
+pane_borders = true
+pane_gaps = true
+hide_tab_bar_when_single_tab = true
+window_title = "{hostname}: {workspace}/{tab}"
+
+[ui.sound]
+enabled = false
+
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[session]
+resume_agents_on_restore = true
+
+[remote]
+manage_ssh_config = true
+
+[server]
+headless_cols = 120
+headless_rows = 40
+
+[advanced]
+scrollback_limit_bytes = 10000000

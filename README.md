@@ -29,6 +29,8 @@ New-Item -ItemType SymbolicLink -Path $wt -Target "\\wsl.localhost\archlinux\roo
 
 One file, one repo — Windows Terminal writes settings-UI changes straight into the WSL checkout, so `git status`/`git diff`/`git commit` from inside WSL pick them up like any other edit. First access after WSL has been shut down may take a moment while the VM spins back up to serve the UNC share.
 
+**Important:** Windows Terminal does not hot-reload a symlinked `settings.json`. That is intentional ([WT #5625](https://github.com/microsoft/terminal/issues/5625), [#6209](https://github.com/microsoft/terminal/issues/6209)): WT watches the symlink path, not the WSL target, so edits in this repo are written to disk but not picked up by an already-running Terminal. **Fully quit Windows Terminal** (all windows, including the tray icon) and reopen it after changing `windows-terminal/settings.json`. A new tab inside an existing window is not enough.
+
 ## Shell performance notes
 
 The zsh config is intentionally kept small: it avoids oh-my-zsh/plugin-manager startup work, sources only the two installed plugins directly, caches `compinit`, and lazy-loads heavier tools such as `nvm`.
