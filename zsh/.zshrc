@@ -51,7 +51,12 @@ bindkey '^[[1;5D' backward-word    # Ctrl+Left
 # Lightweight plugins cloned by sync.sh; source files directly to avoid a plugin manager/framework.
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-$HOME/.zsh/plugins}"
 [[ -r "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
-[[ -r "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+# On WSL, highlighting incomplete commands searches the inherited Windows PATH
+# on each keystroke (~250 ms here). Keep that PATH for Windows interop, but skip
+# syntax highlighting so typing stays responsive.
+if [[ -z "$WSL_DISTRO_NAME" && -r "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+    source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
 
 # Oh-my-zsh git aliases without loading the full framework.
 OMZ_GIT="${ZSH:-$HOME/.oh-my-zsh}"
