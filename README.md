@@ -12,7 +12,7 @@ cd ~/code/config
 
 ## Post-install
 
-Create `~/.zshrc.local` for machine-specific config (AWS, pyenv, nvm, work aliases, etc).
+`sync.sh` creates an empty `~/.zshrc.local` on first run for machine-specific config (AWS, pyenv, nvm, work aliases, etc) — it's sourced by `.zshrc` but never tracked in this repo, so edit it freely.
 
 ## Windows Terminal (WSL hosts)
 
