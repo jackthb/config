@@ -330,6 +330,15 @@ if [[ ! -d "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting" ]]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting"
 fi
 
+# Machine-specific config, sourced by .zshrc but never tracked in this repo.
+if [[ ! -f "$HOME/.zshrc.local" ]]; then
+    echo "Creating ~/.zshrc.local..."
+    cat > "$HOME/.zshrc.local" <<'EOF'
+# Machine-specific config (AWS, pyenv, nvm, work aliases, etc).
+# Not tracked by the config repo — edit freely.
+EOF
+fi
+
 # Set git identity if not already configured
 if [[ -z "$(git config --global user.name)" ]]; then
     git config --global user.name "jackthb"

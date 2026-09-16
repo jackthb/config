@@ -12,24 +12,13 @@ cd ~/code/config
 
 ## Post-install
 
-Create `~/.zshrc.local` for machine-specific config (AWS, pyenv, nvm, work aliases, etc).
+`sync.sh` creates an empty `~/.zshrc.local` on first run for machine-specific config (AWS, pyenv, nvm, work aliases, etc) — it's sourced by `.zshrc` but never tracked in this repo, so edit it freely.
 
 ## Windows Terminal (WSL hosts)
 
-`windows-terminal/settings.json` tracks the real Windows Terminal config, but it lives outside `sync.sh`'s stow flow — stow only symlinks into the WSL home (`~`), while Windows Terminal reads `settings.json` from the Windows side (`AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json` for the Store install), which is a native Win32 app and can't resolve a symlink pointing back into the WSL filesystem via a plain Linux path.
+Run `windows-terminal/setup.ps1` from PowerShell to link the real settings.json to this repo (pass `-Distro`/`-RepoPath` if they differ from the defaults).
 
-Instead of a second checkout, point the real settings.json at this same repo through the `\\wsl.localhost\` UNC path. Run this from PowerShell (as admin, or with Developer Mode enabled for non-admin symlinks) — replace `archlinux` with your distro name (`wsl -l` to check) and the path with wherever this repo is actually cloned:
-
-```powershell
-$wt = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-Copy-Item $wt "$wt.bak"
-Remove-Item $wt
-New-Item -ItemType SymbolicLink -Path $wt -Target "\\wsl.localhost\archlinux\root\code\config\windows-terminal\settings.json"
-```
-
-One file, one repo — Windows Terminal writes settings-UI changes straight into the WSL checkout, so `git status`/`git diff`/`git commit` from inside WSL pick them up like any other edit. First access after WSL has been shut down may take a moment while the VM spins back up to serve the UNC share.
-
-**Important:** Windows Terminal does not hot-reload a symlinked `settings.json`. That is intentional ([WT #5625](https://github.com/microsoft/terminal/issues/5625), [#6209](https://github.com/microsoft/terminal/issues/6209)): WT watches the symlink path, not the WSL target, so edits in this repo are written to disk but not picked up by an already-running Terminal. **Fully quit Windows Terminal** (all windows, including the tray icon) and reopen it after changing `windows-terminal/settings.json`. A new tab inside an existing window is not enough.
+**Important:** after changing `windows-terminal/settings.json`, fully quit Windows Terminal (all windows + tray icon) and reopen it — it doesn't hot-reload a symlinked settings file.
 
 ## Shell performance notes
 

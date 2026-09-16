@@ -134,8 +134,12 @@ case ":$PATH:" in
 esac
 # pnpm end
 
-# Windows Terminal shell integration is useful only when `wt` exists; keep it after the fast path.
-if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+# Windows Terminal shell integration is only relevant under WSL, where `wt.exe` is on PATH.
+# Gate on WSL specifically — a `wt` binary from something unrelated (e.g. worktrunk) on
+# PATH elsewhere would otherwise get its `config shell init` subcommand eval'd here too.
+if [[ -n "$WSL_DISTRO_NAME" ]] && command -v wt >/dev/null 2>&1; then
+    eval "$(command wt config shell init zsh)"
+fi
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
