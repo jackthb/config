@@ -464,4 +464,20 @@ for pkg in "${PACKAGES[@]}"; do
     done < <(find "$pkg" -type f -print0)
 done
 
+# Native conversation restore needs hooks as well as Herdr's session config.
+# Run after seeding agent configs; the official installers preserve other hooks.
+if command -v herdr &> /dev/null; then
+    for agent in codex claude; do
+        case "$agent" in
+            codex) agent_config_dir="${CODEX_HOME:-$HOME/.codex}" ;;
+            claude) agent_config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}" ;;
+        esac
+        if command -v "$agent" &> /dev/null && [[ -d "$agent_config_dir" ]]; then
+            if ! herdr integration install "$agent"; then
+                echo "Warning: Herdr integration for $agent failed; retry with: herdr integration install $agent" >&2
+            fi
+        fi
+    done
+fi
+
 echo "Done!"
