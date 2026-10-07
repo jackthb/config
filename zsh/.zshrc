@@ -27,6 +27,8 @@ HISTSIZE=10000
 SAVEHIST=10000
 setopt append_history share_history hist_ignore_dups hist_ignore_space hist_reduce_blanks
 setopt auto_cd auto_pushd pushd_ignore_dups interactive_comments extended_glob
+# Keep plugin variable redeclarations quiet when re-sourcing this file.
+setopt typeset_silent
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
