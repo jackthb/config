@@ -16,7 +16,9 @@ version_check = true
 manifest_check = true
 
 [ui]
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
+sidebar_width = 44
+sidebar_max_width = 56
 show_agent_labels_on_pane_borders = true
 copy_on_select = true
 mouse_capture = true
@@ -27,7 +29,23 @@ prompt_new_workspace_name = false
 pane_borders = true
 pane_gaps = true
 hide_tab_bar_when_single_tab = true
-window_title = "{hostname}: {workspace}/{tab}"
+window_title = "{terminal_title} · {workspace} · {hostname}"
+
+# Codex already supplies a conversation title through the terminal title.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", { token = "terminal_title_stripped", bold = true, dim = false }],
+  ["agent", "tab"],
+  ["$directory"],
+]
+
+# The local task-labels plugin supplies these from live pane metadata.
+[ui.sidebar.spaces]
+rows = [
+  ["state_icon", { token = "$task", bold = true, dim = false }],
+  ["$directory"],
+  ["branch", "git_status"],
+]
 
 [ui.sound]
 enabled = false

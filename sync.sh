@@ -76,6 +76,15 @@ if [[ ${#PKGS_TO_INSTALL[@]} -gt 0 ]]; then
     native_install "${PKGS_TO_INSTALL[@]}"
 fi
 
+# Herdr's task/directory label helper uses the Python standard library.
+if ! command -v python3 &> /dev/null; then
+    native_sync
+    case "$PKG_MANAGER" in
+        brew|pacman) native_install python ;;
+        *)           native_install python3 ;;
+    esac
+fi
+
 # wl-clipboard: provides wl-copy/wl-paste so Wayland apps and terminal tools
 # (e.g. Claude Code's image paste) can read/write the system clipboard.
 # Linux/Wayland only — macOS uses pbcopy/pbpaste. Same package name everywhere.
@@ -479,5 +488,7 @@ if command -v herdr &> /dev/null; then
         fi
     done
 fi
+
+bash "$CONFIG_DIR/scripts/setup-herdr.sh"
 
 echo "Done!"

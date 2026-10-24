@@ -37,6 +37,24 @@ Check installation with `herdr integration status`.
 WSL shutdown still ends running processes. Restored terminal output is a saved
 screen; ordinary commands and development servers need to be started again.
 
+## Herdr labels
+
+The `herdr` Stow package shows conversation titles and full working directories
+in the Agents and Spaces sidebars. Space task labels follow the active pane.
+The title comes from the agent's terminal title, so a conversation reused for
+unrelated tasks may retain its original title.
+
+`install.sh`, `sync.sh`, and `config-sync` link the local Python helper at
+`~/.local/share/herdr/task-labels`, register it with Herdr, and refresh a running
+session. The helper uses Python 3's standard library and refreshes metadata on
+startup, focus, pane lifecycle, workspace updates, and agent status changes.
+
+To refresh labels manually:
+
+```bash
+herdr plugin action invoke local.task-labels.refresh
+```
+
 ## Shell performance notes
 
 The zsh config is intentionally kept small: it avoids oh-my-zsh/plugin-manager startup work, sources only the two installed plugins directly, caches `compinit`, and lazy-loads heavier tools such as `nvm`.
