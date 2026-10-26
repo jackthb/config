@@ -55,6 +55,42 @@ To refresh labels manually:
 herdr plugin action invoke local.task-labels.refresh
 ```
 
+### WSL and the Pi session
+
+On WSL, the optional `pi-shell.sh` module makes `herdr` attach directly to the
+Pi's persistent default session. Panes and agents run on the Pi and survive a
+lost SSH connection or a closed Windows Terminal window. `herdr --local` runs
+the WSL binary when a local session is wanted.
+
+The launcher uses Windows `ssh.exe` when available in WSL so existing Windows
+SSH keys and SSH-agent access continue to work; otherwise it uses Linux `ssh`.
+It sends keepalives every 30 seconds and restores local terminal modes on exit,
+including after a broken connection. Typing `herdr` again reattaches to the same
+Pi session. It does not automatically retry authentication or connection errors.
+
+To install it from the Pi into the local WSL/Ubuntu shell:
+
+```bash
+ssh.exe -o BatchMode=yes -o ConnectTimeout=10 jack@pi 'cat /home/jack/config/scripts/setup-wsl-herdr.sh' > /tmp/setup-wsl-herdr.sh &&
+bash /tmp/setup-wsl-herdr.sh &&
+source ~/.config/herdr/pi-shell.sh &&
+herdr
+```
+
+The default target uses your existing `pi` SSH alias or hostname. Set `HERDR_PI_HOST` to use
+another SSH target, or `HERDR_PI_SSH` to select the SSH executable. The installer
+adds the module to existing Bash and Zsh startup files and backs up different
+launcher files before replacing them.
+The installer bundles both files, so it makes no further SSH connections.
+The download uses batch authentication to fail visibly rather than wait for an
+unseen prompt. If it reports an authentication error, connect once interactively
+with `ssh.exe jack@pi` to check keys or unlock the SSH agent.
+
+The Pi's SSH server keepalive drop-in is recorded in
+`ssh-server/20-session-keepalive.conf`; it belongs in
+`/etc/ssh/sshd_config.d/`, not in a Stow package. Validate changes with
+`sudo sshd -t` before applying them with `sudo systemctl reload ssh`.
+
 ## Shell performance notes
 
 The zsh config is intentionally kept small: it avoids oh-my-zsh/plugin-manager startup work, sources only the two installed plugins directly, caches `compinit`, and lazy-loads heavier tools such as `nvm`.

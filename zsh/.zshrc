@@ -19,7 +19,7 @@ elif [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
 fi
 
 # Local binaries
-export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
 
 # Zsh basics formerly covered by oh-my-zsh defaults/plugins.
 HISTFILE="$HOME/.zsh_history"
@@ -89,6 +89,9 @@ if [[ -n "$WSL_DISTRO_NAME" ]]; then
     alias ssh-add="ssh-add.exe"
 fi
 
+# In WSL, the default Herdr command reconnects to the persistent Pi session.
+[[ -r "$HOME/.config/herdr/pi-shell.sh" ]] && source "$HOME/.config/herdr/pi-shell.sh"
+
 # Starship prompt
 eval "$(starship init zsh)"
 
@@ -149,3 +152,7 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# >>> Codex installer >>>
+export PATH="/home/jack/.local/bin:$PATH"
+# <<< Codex installer <<<
