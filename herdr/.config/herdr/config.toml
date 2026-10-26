@@ -31,12 +31,10 @@ pane_gaps = true
 hide_tab_bar_when_single_tab = true
 window_title = "{terminal_title} · {workspace} · {hostname}"
 
-# Codex already supplies a conversation title through the terminal title.
+# Keep Agents compact; task titles and directories appear under Spaces.
 [ui.sidebar.agents]
 rows = [
-  ["state_icon", { token = "terminal_title_stripped", bold = true, dim = false }],
-  ["agent", "tab"],
-  ["$directory"],
+  ["state_icon", "workspace", "agent"],
 ]
 
 # The local task-labels plugin supplies these from live pane metadata.

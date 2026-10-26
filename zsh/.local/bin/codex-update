@@ -1,0 +1,13 @@
+#!/bin/bash
+# Keep installs and updates with the same package manager.
+set -e
+
+if command -v volta >/dev/null 2>&1; then
+    exec volta install @openai/codex@latest
+fi
+
+if [[ -w "$(npm config get prefix)" ]]; then
+    exec npm install -g @openai/codex@latest
+else
+    exec sudo npm install -g @openai/codex@latest
+fi

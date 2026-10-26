@@ -25,6 +25,17 @@ def directory(pane):
     return pane.get("foreground_cwd") or pane.get("cwd") or ""
 
 
+def display_directory(pane):
+    cwd = directory(pane)
+    if not cwd:
+        return ""
+    try:
+        relative = Path(cwd).relative_to(Path.home())
+    except ValueError:
+        return cwd
+    return "~" if relative == Path(".") else "~/" + str(relative)
+
+
 def task(pane):
     # Herdr strips the activity spinner; remove the trailing folder when present.
     title = pane.get("terminal_title_stripped") or ""
@@ -63,7 +74,7 @@ def main():
         snapshot = call("api", "snapshot")["snapshot"]
         panes = snapshot["panes"]
         for pane in panes:
-            report("pane", pane, pane["pane_id"], {"directory": directory(pane)})
+            report("pane", pane, pane["pane_id"], {"directory": display_directory(pane)})
         for workspace in snapshot["workspaces"]:
             members = [p for p in panes if p["workspace_id"] == workspace["workspace_id"]]
             active = [p for p in members if p["tab_id"] == workspace.get("active_tab_id")]
@@ -71,7 +82,7 @@ def main():
             selected = candidates[0] if candidates else {}
             report("workspace", workspace, workspace["workspace_id"], {
                 "task": task(selected) or workspace.get("label") or Path(directory(selected)).name,
-                "directory": directory(selected),
+                "directory": display_directory(selected),
             })
 
 

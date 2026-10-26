@@ -180,10 +180,11 @@ if ! command -v herdr &> /dev/null; then
     curl -fsSL https://herdr.dev/install.sh | sh
 fi
 
-# Codex CLI: installed globally via npm. Pull in node/npm first if missing
+# Codex CLI: prefer Volta when available so installs and updates use its copy.
+# Otherwise install globally via npm. Pull in node/npm first if missing
 # (brew bundles npm with the node formula; other managers ship npm separately).
 if ! command -v codex &> /dev/null; then
-    if ! command -v npm &> /dev/null; then
+    if ! command -v volta &> /dev/null && ! command -v npm &> /dev/null; then
         echo "Installing node/npm..."
         native_sync
         case "$PKG_MANAGER" in
@@ -192,12 +193,7 @@ if ! command -v codex &> /dev/null; then
         esac
     fi
     echo "Installing Codex CLI..."
-    # brew's npm prefix is user-writable; system npm on Linux needs sudo.
-    if [[ -w "$(npm config get prefix)" ]]; then
-        npm install -g @openai/codex
-    else
-        sudo npm install -g @openai/codex
-    fi
+    bash "$CONFIG_DIR/zsh/.local/bin/codex-update"
 fi
 
 # GUI apps: 1Password + Ghostty (pacman and brew fully wired; other distros stubbed)

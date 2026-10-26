@@ -14,6 +14,11 @@ cd ~/code/config
 
 `sync.sh` creates an empty `~/.zshrc.local` on first run for machine-specific config (AWS, pyenv, nvm, work aliases, etc) — it's sourced by `.zshrc` but never tracked in this repo, so edit it freely.
 
+Run `codex-update` to update Codex CLI. Installation and updates use Volta when
+available, otherwise npm. With Volta, Codex's built-in npm update command can
+update a separate Node global copy while leaving the active Volta copy outdated;
+use `codex-update` instead.
+
 ## Windows Terminal (WSL hosts)
 
 Run `windows-terminal/setup.ps1` from PowerShell to link the real settings.json to this repo (pass `-Distro`/`-RepoPath` if they differ from the defaults).
@@ -39,8 +44,10 @@ screen; ordinary commands and development servers need to be started again.
 
 ## Herdr labels
 
-The `herdr` Stow package shows conversation titles and full working directories
-in the Agents and Spaces sidebars. Space task labels follow the active pane.
+The `herdr` Stow package shows conversation titles and working directories
+under Spaces, with compact single-line status entries under Agents.
+Space task labels follow the active pane.
+Directories under your home folder use `~`, for example `~/code/config`.
 The title comes from the agent's terminal title, so a conversation reused for
 unrelated tasks may retain its original title.
 
