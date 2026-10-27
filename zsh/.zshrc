@@ -94,6 +94,9 @@ fi
 
 # Starship prompt
 eval "$(starship init zsh)"
+# This theme only uses the left prompt. Starship still installs a command
+# substitution in RPROMPT; clear it so redraws cannot show that command literally.
+RPROMPT=''
 
 # nvm — lazy-loaded to avoid multi-second startup cost.
 # nvm/node/npm/npx trigger the real load on first use.
